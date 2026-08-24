@@ -30,7 +30,10 @@ Since I'm decided to use ORM, Alembic will help me to write the db. versions. It
 Since it will be a small API, I will go by simplicity and only write 3 layers (controller, service and repository) - or something similar.
 
 # Infra
-To make the code executable in another machine easily, I'll dockerize and write a docker compose with the dependencies to run the entire system
+To make the code executable in another machine easily, the project provides a Docker Compose stack with PostgreSQL and the API. The same Compose file also supports local development by starting only the PostgreSQL service; the Tornado process then uses the default connection settings for `localhost`.
+
+# Database health check
+`GET /health/db` acquires an asynchronous SQLAlchemy connection and executes `SELECT 1`. It returns HTTP 200 when PostgreSQL is reachable and HTTP 503 when the database query fails.
 
 # Container image
 The application image uses two `python:3.14-alpine` stages. The builder stage resolves production dependencies with UV, while the runtime stage only contains the application source and the prepared virtual environment. This keeps dependency tooling out of the final image.

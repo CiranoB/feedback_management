@@ -1,21 +1,45 @@
 # feedback_management
 
-## Run with Docker
+Tornado API with an asynchronous PostgreSQL health check at `GET /health/db`.
 
-Build the image from the repository root:
+## Stakeholder demo: full Compose stack
+
+From the repository root, start both the API and PostgreSQL:
 
 ```sh
-docker build --tag feedback-management .
+docker compose --file infra/docker-compose.yml up --build --wait
 ```
 
-Run the API on the default port:
+Call the database health check:
 
 ```sh
-docker run --rm --publish 8888:8888 feedback-management
+curl http://localhost:8888/health/db
 ```
 
-Set `PORT` to use a different application port:
+It returns `{"database":"available"}` when PostgreSQL accepts a query. Stop the stack with:
 
 ```sh
-docker run --rm --publish 8080:8080 --env PORT=8080 feedback-management
+docker compose --file infra/docker-compose.yml down
+```
+
+Add `--volumes` to the `down` command to remove the local PostgreSQL data volume.
+
+## Local development: database container only
+
+Start only PostgreSQL:
+
+```sh
+docker compose --file infra/docker-compose.yml up postgres
+```
+
+In another terminal, run the API locally:
+
+```sh
+uv run python main.py
+```
+
+The default settings connect to `localhost:5432` using database `feedback_management` and user/password `feedback`. Override any setting with the matching environment variable, for example:
+
+```sh
+POSTGRES_HOST=localhost POSTGRES_PORT=5433 uv run python main.py
 ```
