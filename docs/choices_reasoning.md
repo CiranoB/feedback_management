@@ -32,3 +32,6 @@ Since it will be a small API, I will go by simplicity and only write 3 layers (c
 # Infra
 To make the code executable in another machine easily, I'll dockerize and write a docker compose with the dependencies to run the entire system
 
+# Container image
+The application image uses two `python:3.14-alpine` stages. The builder stage resolves production dependencies with UV, while the runtime stage only contains the application source and the prepared virtual environment. This keeps dependency tooling out of the final image.
+
