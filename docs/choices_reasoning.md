@@ -20,6 +20,12 @@ Challenge Requirement
 # Database: Postgres
 Has widely doc available, it is open-source and free to use
 
+# Feedback model
+The `Feedback` SQLAlchemy model contains an identifier, an optional text note, a required rating, and a manager-facing status. A database check constraint limits ratings to the challenge-defined range of 1 (bad) through 5 (very good). Status is an enum that defaults to `open` and supports the three required closed states: backlog, solved, and rejected.
+
+# Comments model
+The `Comments` model stores required text content and belongs to one `Feedback` record through a required foreign key. The reverse `Feedback.comments` relationship exposes all comments associated with a feedback entry.
+
 # ORM usage: SQLAlchemy + asyncpg
 Since tornado is a framework to overcome C10k problem, a good pair to it is an async connection with the DB.
 
