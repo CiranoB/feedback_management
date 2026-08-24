@@ -29,7 +29,7 @@ class Feedback(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     rating: Mapped[int] = mapped_column(
         Integer,
-        CheckConstraint("rating BETWEEN 1 AND 5", name="feedback_rating_range"),
+        CheckConstraint(sqltext="rating BETWEEN 1 AND 5", name="feedback_rating_range"),
         nullable=False,
     )
     status: Mapped[FeedbackStatus] = mapped_column(
@@ -41,7 +41,7 @@ class Feedback(Base):
             validate_strings=True,
         ),
         default=FeedbackStatus.OPEN,
-        server_default=FeedbackStatus.OPEN.value,
+        server_default=FeedbackStatus.OPEN.name,
         nullable=False,
     )
     comments: Mapped[list[Comments]] = relationship(back_populates="feedback")

@@ -17,6 +17,8 @@ For this project I'll try a pretty recent type checker written in Rust called ty
 # Framework
 Challenge Requirement
 
+Tornado remains the HTTP framework, so OpenAPI and Swagger UI are served as ordinary Tornado routes at `/openapi.json` and `/docs`. This keeps the interactive API documentation available without introducing a second web framework.
+
 # Database: Postgres
 Has widely doc available, it is open-source and free to use
 
@@ -31,6 +33,8 @@ Since tornado is a framework to overcome C10k problem, a good pair to it is an a
 
 # Database versioning tool: Alembic
 Since I'm decided to use ORM, Alembic will help me to write the db. versions. It also allow me to navigate across db versions due its "upgrade" and "downgrade" methods. 
+
+The application runs `alembic upgrade head` through the existing asynchronous SQLAlchemy engine during startup. This creates a fresh schema from the initial revision and applies only pending revisions to an existing database. The first run also stamps databases that contain the complete pre-migration schema, preserving data created before Alembic was introduced.
 
 # Design pattern: MVC-ish
 Since it will be a small API, I will go by simplicity and only write 3 layers (controller, service and repository) - or something similar.

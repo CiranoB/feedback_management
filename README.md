@@ -1,6 +1,6 @@
 # feedback_management
 
-Tornado API with an asynchronous PostgreSQL health check at `GET /health/db`.
+Tornado API for collecting rated feedback, backed by PostgreSQL.
 
 ## Stakeholder demo: full Compose stack
 
@@ -43,3 +43,14 @@ The default settings connect to `localhost:5432` using database `feedback_manage
 ```sh
 POSTGRES_HOST=localhost POSTGRES_PORT=5433 uv run python main.py
 ```
+
+## API and UI
+
+When the API is running, open `http://localhost:8888/docs` for Swagger UI. It documents and lets you execute these endpoints:
+
+- `POST /api/feedback` creates feedback with a required `rating` from 1 through 5 and an optional `note`.
+- `GET /api/feedback` lists feedback, newest first.
+
+For a simple browser view of submitted entries, open `http://localhost:8888/display`.
+
+At startup, the application runs `alembic upgrade head`. A new database is initialized with the latest schema and an existing database is upgraded only for pending migrations. Databases created by the earlier application startup path are recognized and stamped at the initial revision, without recreating their existing tables.

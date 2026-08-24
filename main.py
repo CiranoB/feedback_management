@@ -7,7 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from tornado.web import Application
 
 from api.config.global_settings import settings
-from api.database import create_database_engine
+from api.database import create_database_engine, upgrade_database
+from api.models.comments import Comments  # noqa: F401
+from api.routes.docs import OpenApiHandler, SwaggerUiHandler
+from api.routes.feedback import DisplayHandler, FeedbackHandler
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -41,6 +44,10 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
             (r"/", MainHandler),
             (r"/post", PostHandler),
             (r"/health/db", DatabaseHealthHandler),
+            (r"/api/feedback", FeedbackHandler),
+            (r"/display", DisplayHandler),
+            (r"/openapi.json", OpenApiHandler),
+            (r"/docs/?", SwaggerUiHandler),
         ],
         database_engine=database_engine,
         debug=settings.debug,
@@ -50,6 +57,7 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
 
 async def main():
     database_engine = create_database_engine(settings.database_url)
+    await upgrade_database(database_engine)
     app: Application = make_app(database_engine)
     app.listen(port=settings.port)
 
