@@ -45,8 +45,6 @@ The application runs `alembic upgrade head` through the existing asynchronous SQ
 # Design pattern: MVC-ish
 Since it will be a small API, I will go by simplicity and only write 3 layers (controller, service and repository) - or something similar.
 
-# Service layer
-`FeedbackService`, `CommentsService`, and `NotationService` encapsulate asynchronous database operations behind a shared session-factory pattern. `GET` and `POST /api/feedback/{feedback_id}/comments` expose comment browsing and creation. `POST /api/feedback/{feedback_id}/notations` and `POST /api/comments/{comment_id}/notations` expose notation creation; database constraints enforce target validity and per-user uniqueness.
 
 # Infra
 To make the code executable in another machine easily, the project provides a Docker Compose stack with PostgreSQL and the API. The same Compose file also supports local development by starting only the PostgreSQL service; the Tornado process then uses the default connection settings for `localhost`.

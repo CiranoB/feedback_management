@@ -2,7 +2,9 @@ from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
+from api.models.comments import Comments
 from api.models.feedback import Feedback
 
 
@@ -13,7 +15,12 @@ class FeedbackService:
     async def list_feedback(self) -> Sequence[Feedback]:
         async with self._session_factory() as session:
             feedback_entries = await session.scalars(
-                select(Feedback).order_by(Feedback.id.desc())
+                select(Feedback)
+                .options(
+                    selectinload(Feedback.comments).selectinload(Comments.notations),
+                    selectinload(Feedback.notations),
+                )
+                .order_by(Feedback.id.desc())
             )
             return list(feedback_entries)
 

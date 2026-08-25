@@ -223,6 +223,8 @@ class OpenApiHandler(RequestHandler):
                                 "note",
                                 "rating",
                                 "status",
+                                "comments",
+                                "notations",
                             ],
                             "properties": {
                                 "id": {"type": "integer"},
@@ -242,6 +244,16 @@ class OpenApiHandler(RequestHandler):
                                         "closed_rejected",
                                     ],
                                 },
+                                "comments": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/FeedbackComment"
+                                    },
+                                },
+                                "notations": {
+                                    "type": "array",
+                                    "items": {"$ref": "#/components/schemas/Notation"},
+                                },
                             },
                         },
                         "Comment": {
@@ -253,6 +265,23 @@ class OpenApiHandler(RequestHandler):
                                 "content": {"type": "string"},
                                 "feedback_id": {"type": "integer"},
                             },
+                        },
+                        "FeedbackComment": {
+                            "allOf": [
+                                {"$ref": "#/components/schemas/Comment"},
+                                {
+                                    "type": "object",
+                                    "required": ["notations"],
+                                    "properties": {
+                                        "notations": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Notation"
+                                            },
+                                        }
+                                    },
+                                },
+                            ]
                         },
                         "NotationCreate": {
                             "type": "object",

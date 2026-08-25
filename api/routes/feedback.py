@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
 from api.models.feedback import Feedback, FeedbackStatus
+from api.models.notation import Notation
 from api.services.feedback import FeedbackService
 
 
@@ -16,6 +17,26 @@ class FeedbackCreate(BaseModel):
     author_id: str = Field(min_length=1, max_length=255)
     note: str | None = Field(default=None, max_length=10_000)
     rating: int = Field(ge=1, le=5)
+
+
+class NotationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: str
+    value: int
+    feedback_id: int | None
+    comment_id: int | None
+
+
+class CommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    author_id: str
+    content: str
+    feedback_id: int
+    notations: list[NotationResponse]
 
 
 class FeedbackResponse(BaseModel):
@@ -26,6 +47,8 @@ class FeedbackResponse(BaseModel):
     note: str | None
     rating: int
     status: FeedbackStatus
+    comments: list[CommentResponse]
+    notations: list[NotationResponse]
 
 
 class JsonHandler(RequestHandler):
@@ -65,7 +88,36 @@ class FeedbackHandler(JsonHandler):
         )
 
         self.set_status(201)
-        self.write(FeedbackResponse.model_validate(feedback).model_dump(mode="json"))
+        self.write(
+            FeedbackResponse(
+                id=feedback.id,
+                author_id=feedback.author_id,
+                note=feedback.note,
+                rating=feedback.rating,
+                status=feedback.status,
+                comments=[],
+                notations=[],
+            ).model_dump(mode="json")
+        )
+
+
+def render_notations(notations: Sequence[Notation]) -> str:
+    if not notations:
+        return '<span class="vote-empty">No votes yet</span>'
+
+    score = sum(notation.value for notation in notations)
+    score_class = "positive" if score > 0 else "negative" if score < 0 else "neutral"
+    votes = "".join(
+        f'<span class="vote {"positive" if notation.value > 0 else "negative" if notation.value < 0 else "neutral"}" '
+        f'title="{escape(notation.user_id)}: {notation.value:+d}">'
+        f"{notation.value:+d}</span>"
+        for notation in notations
+    )
+    return (
+        f'<div class="vote-summary {score_class}"><strong>{score:+d}</strong>'
+        f'<span class="vote-strip" aria-label="{len(notations)} votes">{votes}</span>'
+        "</div>"
+    )
 
 
 class DisplayHandler(RequestHandler):
@@ -81,13 +133,35 @@ class DisplayHandler(RequestHandler):
 
         cards = (
             "".join(
-                "<article><h2>Feedback #{id}</h2><p>{note}</p>"
-                "<dl><dt>Rating</dt><dd>{rating}/5</dd><dt>Status</dt>"
-                "<dd>{status}</dd></dl></article>".format(
+                '<article><header><span class="feedback-id">#{id}</span>'
+                '<span class="status {status_class}">{status}</span></header>'
+                '<p class="note">{note}</p><div class="signals">'
+                '<div class="rating"><span>Rating</span><meter min="1" max="5" '
+                'value="{rating}">{rating}/5</meter><strong>{rating}/5</strong></div>'
+                '<div class="community-signal"><span>Community signal</span>'
+                '{notations}</div></div><details class="discussion"><summary>'
+                "<span>Discussion</span><span>{comment_count} comments</span></summary>"
+                "{comments}</details></article>".format(
                     id=entry.id,
                     note=escape(entry.note or "No note provided"),
                     rating=entry.rating,
                     status=escape(entry.status.value.replace("_", " ")),
+                    status_class=escape(entry.status.value),
+                    notations=render_notations(entry.notations),
+                    comment_count=len(entry.comments),
+                    comments=(
+                        '<ul class="comments">{}</ul>'.format(
+                            "".join(
+                                f'<li><span class="comment-author">'
+                                f"{escape(comment.author_id)}</span>"
+                                f"<p>{escape(comment.content)}</p>"
+                                f"{render_notations(comment.notations)}</li>"
+                                for comment in entry.comments
+                            )
+                        )
+                        if entry.comments
+                        else '<p class="empty">No comments yet.</p>'
+                    ),
                 )
                 for entry in feedback_entries
             )
@@ -103,9 +177,24 @@ class DisplayHandler(RequestHandler):
             "h1{font:700 40px/1.1 Georgia,serif;margin:0 0 32px;color:#154c54}"
             "article{background:#fff;border:1px solid #d7d1c2;border-radius:6px;"
             "padding:20px 24px;margin:12px 0;box-shadow:0 2px 8px #17222d12}"
-            "h2{font-size:20px;margin:0 0 12px}p{line-height:1.5}"
-            "dl{display:grid;grid-template-columns:90px 1fr;gap:6px;margin:16px 0 0}"
-            "dt{font-weight:bold}dd{margin:0;text-transform:capitalize}.empty{color:#58636c}"
+            "article header,.signals,.discussion summary{display:flex;align-items:center;justify-content:space-between;gap:16px}"
+            ".feedback-id{font-size:22px;font-weight:bold;color:#154c54}.status{border-radius:999px;padding:4px 9px;"
+            "background:#d8eadc;color:#1e5b34;text-transform:capitalize;font:700 13px Georgia,serif}"
+            ".status.closed_rejected{background:#f3d7d1;color:#8b2b1c}.status.closed_backlog{background:#e7dfb9;color:#675b0d}"
+            ".status.closed_solved{background:#d4e7e8;color:#16555b}.note{font-size:18px;line-height:1.45;margin:16px 0}"
+            ".signals{border-top:1px solid #d7d1c2;border-bottom:1px solid #d7d1c2;padding:12px 0}"
+            ".rating,.community-signal{display:grid;gap:5px;font-size:13px;color:#58636c}.rating{grid-template-columns:auto 110px auto;align-items:center}"
+            "meter{width:110px;accent-color:#d07631}.rating strong,.vote-summary strong{color:#17222d;font-size:16px}"
+            ".vote-summary{display:flex;align-items:center;gap:8px}.vote-strip{display:flex;flex-wrap:wrap;gap:4px}"
+            ".vote{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 12px Georgia,serif}"
+            ".vote.positive{background:#317d4c}.vote.negative{background:#b44a3c}.vote.neutral{background:#6b7780}"
+            ".vote-summary.positive strong{color:#317d4c}.vote-summary.negative strong{color:#b44a3c}.vote-empty,.empty{color:#58636c}"
+            ".discussion{margin-top:16px}.discussion summary{cursor:pointer;color:#154c54;font-weight:bold;list-style:none}"
+            ".discussion summary::-webkit-details-marker{display:none}.discussion summary::after{content:'+';font-size:20px}"
+            ".discussion[open] summary::after{content:'-'} .comments{list-style:none;margin:14px 0 0;padding:0}"
+            ".comments>li{border-top:1px solid #e4dfd3;padding:12px 0;display:grid;gap:7px}"
+            ".comment-author{font-weight:bold}.comments p{line-height:1.4;margin:0}@media(max-width:560px){main{padding:28px 16px}"
+            "h1{font-size:32px}.signals{align-items:start;flex-direction:column}.rating{grid-template-columns:auto 1fr auto}}"
             "</style></head><body><main><h1>Community Feedback</h1>"
             f"{cards}</main></body></html>"
         )
