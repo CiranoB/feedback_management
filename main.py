@@ -4,13 +4,19 @@ import tornado
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
+from swagger_ui import api_doc
 from tornado.web import Application
 
 from api.config.global_settings import settings
 from api.database import create_database_engine, upgrade_database
 from api.models.comments import Comments  # noqa: F401
 from api.models.notation import Notation  # noqa: F401
-from api.routes.docs import OpenApiHandler, SwaggerUiHandler
+from api.routes.comments import (
+    CommentNotationHandler,
+    CommentsHandler,
+    FeedbackNotationHandler,
+)
+from api.routes.docs import OpenApiHandler
 from api.routes.feedback import DisplayHandler, FeedbackHandler
 
 
@@ -40,20 +46,32 @@ class DatabaseHealthHandler(tornado.web.RequestHandler):
 
 
 def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
-    return tornado.web.Application(
+    app = tornado.web.Application(
         handlers=[
             (r"/", MainHandler),
             (r"/post", PostHandler),
             (r"/health/db", DatabaseHealthHandler),
             (r"/api/feedback", FeedbackHandler),
+            (r"/api/feedback/([0-9]+)/comments", CommentsHandler),
+            (r"/api/feedback/([0-9]+)/notations", FeedbackNotationHandler),
+            (r"/api/comments/([0-9]+)/notations", CommentNotationHandler),
             (r"/display", DisplayHandler),
             (r"/openapi.json", OpenApiHandler),
-            (r"/docs/?", SwaggerUiHandler),
+            (r"/docs/openapi.json", OpenApiHandler),
         ],
         database_engine=database_engine,
         debug=settings.debug,
         autoreload=settings.debug,
     )
+    api_doc(
+        app,
+        app_type="tornado",
+        config_rel_url="/openapi.json",
+        url_prefix="/docs",
+        title="Feedback API docs",
+        host_inject=False,
+    )
+    return app
 
 
 async def main():

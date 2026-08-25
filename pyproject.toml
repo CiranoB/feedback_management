@@ -10,6 +10,7 @@ dependencies = [
     "pydantic==2.13.4",
     "pydantic-settings==2.15.0",
     "sqlalchemy[asyncio]==2.0.52",
+    "swagger-ui-py==25.7.1",
     "tornado==6.5.8",
 ]
 

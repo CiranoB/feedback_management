@@ -11,7 +11,21 @@ class OpenApiHandler(RequestHandler):
                     "/api/feedback": {
                         "get": {
                             "summary": "List feedback",
-                            "responses": {"200": {"description": "Feedback entries"}},
+                            "responses": {
+                                "200": {
+                                    "description": "Feedback entries, newest first",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/Feedback"
+                                                },
+                                            }
+                                        }
+                                    },
+                                }
+                            },
                         },
                         "post": {
                             "summary": "Create feedback",
@@ -21,9 +35,17 @@ class OpenApiHandler(RequestHandler):
                                     "application/json": {
                                         "schema": {
                                             "type": "object",
-                                            "required": ["rating"],
+                                            "required": ["author_id", "rating"],
                                             "properties": {
-                                                "note": {"type": ["string", "null"]},
+                                                "author_id": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 255,
+                                                },
+                                                "note": {
+                                                    "type": ["string", "null"],
+                                                    "maxLength": 10000,
+                                                },
                                                 "rating": {
                                                     "type": "integer",
                                                     "minimum": 1,
@@ -34,22 +56,242 @@ class OpenApiHandler(RequestHandler):
                                     }
                                 },
                             },
-                            "responses": {"201": {"description": "Created"}},
+                            "responses": {
+                                "201": {
+                                    "description": "Created feedback",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/Feedback"
+                                            }
+                                        }
+                                    },
+                                },
+                                "422": {"description": "Invalid feedback payload"},
+                            },
+                        },
+                    },
+                    "/api/feedback/{feedback_id}/comments": {
+                        "parameters": [
+                            {
+                                "name": "feedback_id",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "integer", "minimum": 1},
+                            }
+                        ],
+                        "get": {
+                            "summary": "List feedback comments",
+                            "responses": {
+                                "200": {
+                                    "description": "Comments for the feedback entry",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/Comment"
+                                                },
+                                            }
+                                        }
+                                    },
+                                }
+                            },
+                        },
+                        "post": {
+                            "summary": "Add a feedback comment",
+                            "requestBody": {
+                                "required": True,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "required": ["author_id", "content"],
+                                            "properties": {
+                                                "author_id": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 255,
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "minLength": 1,
+                                                    "maxLength": 10000,
+                                                },
+                                            },
+                                        }
+                                    }
+                                },
+                            },
+                            "responses": {
+                                "201": {
+                                    "description": "Created comment",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/Comment"
+                                            }
+                                        }
+                                    },
+                                },
+                                "422": {
+                                    "description": "Invalid comment payload or feedback"
+                                },
+                            },
+                        },
+                    },
+                    "/api/feedback/{feedback_id}/notations": {
+                        "parameters": [
+                            {
+                                "name": "feedback_id",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "integer", "minimum": 1},
+                            }
+                        ],
+                        "post": {
+                            "summary": "Add notation to feedback",
+                            "requestBody": {
+                                "required": True,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/NotationCreate"
+                                        }
+                                    }
+                                },
+                            },
+                            "responses": {
+                                "201": {
+                                    "description": "Created notation",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/Notation"
+                                            }
+                                        }
+                                    },
+                                },
+                                "422": {"description": "Invalid or duplicate notation"},
+                            },
+                        },
+                    },
+                    "/api/comments/{comment_id}/notations": {
+                        "parameters": [
+                            {
+                                "name": "comment_id",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "integer", "minimum": 1},
+                            }
+                        ],
+                        "post": {
+                            "summary": "Add notation to a comment",
+                            "requestBody": {
+                                "required": True,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/NotationCreate"
+                                        }
+                                    }
+                                },
+                            },
+                            "responses": {
+                                "201": {
+                                    "description": "Created notation",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/Notation"
+                                            }
+                                        }
+                                    },
+                                },
+                                "422": {"description": "Invalid or duplicate notation"},
+                            },
+                        },
+                    },
+                },
+                "components": {
+                    "schemas": {
+                        "Feedback": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "author_id",
+                                "note",
+                                "rating",
+                                "status",
+                            ],
+                            "properties": {
+                                "id": {"type": "integer"},
+                                "author_id": {"type": "string"},
+                                "note": {"type": ["string", "null"]},
+                                "rating": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 5,
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "open",
+                                        "closed_backlog",
+                                        "closed_solved",
+                                        "closed_rejected",
+                                    ],
+                                },
+                            },
+                        },
+                        "Comment": {
+                            "type": "object",
+                            "required": ["id", "author_id", "content", "feedback_id"],
+                            "properties": {
+                                "id": {"type": "integer"},
+                                "author_id": {"type": "string"},
+                                "content": {"type": "string"},
+                                "feedback_id": {"type": "integer"},
+                            },
+                        },
+                        "NotationCreate": {
+                            "type": "object",
+                            "required": ["user_id", "value"],
+                            "properties": {
+                                "user_id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 255,
+                                },
+                                "value": {
+                                    "type": "integer",
+                                    "minimum": -1,
+                                    "maximum": 1,
+                                },
+                            },
+                        },
+                        "Notation": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "user_id",
+                                "value",
+                                "feedback_id",
+                                "comment_id",
+                            ],
+                            "properties": {
+                                "id": {"type": "integer"},
+                                "user_id": {"type": "string"},
+                                "value": {
+                                    "type": "integer",
+                                    "minimum": -1,
+                                    "maximum": 1,
+                                },
+                                "feedback_id": {"type": ["integer", "null"]},
+                                "comment_id": {"type": ["integer", "null"]},
+                            },
                         },
                     }
                 },
             }
-        )
-
-
-class SwaggerUiHandler(RequestHandler):
-    def get(self, *args: str, **kwargs: str) -> None:
-        self.set_header("Content-Type", "text/html; charset=UTF-8")
-        self.write(
-            "<!doctype html><html><head><title>Feedback API docs</title>"
-            '<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">'
-            '</head><body><div id="swagger-ui"></div>'
-            '<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>'
-            "<script>SwaggerUIBundle({url:'/openapi.json',dom_id:'#swagger-ui'})</script>"
-            "</body></html>"
         )

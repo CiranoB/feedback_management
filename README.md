@@ -46,10 +46,13 @@ POSTGRES_HOST=localhost POSTGRES_PORT=5433 uv run python main.py
 
 ## API and UI
 
-When the API is running, open `http://localhost:8888/docs` for Swagger UI. It documents and lets you execute these endpoints:
+When the API is running, open `http://localhost:8888/docs` for locally served Swagger UI. It documents and lets you execute these endpoints:
 
 - `POST /api/feedback` creates feedback with a required `author_id`, a `rating` from 1 through 5, and an optional `note`.
 - `GET /api/feedback` lists feedback, newest first.
+- `GET` and `POST /api/feedback/{feedback_id}/comments` list and add feedback comments.
+- `POST /api/feedback/{feedback_id}/notations` adds a notation to feedback.
+- `POST /api/comments/{comment_id}/notations` adds a notation to a comment.
 
 Feedback and comments record an `author_id`. A notation stores the submitting `user_id`, a value of `-1`, `0`, or `+1`, and targets exactly one feedback entry or comment. The database allows one notation from a user for each target; authentication can replace these plain identifier fields later.
 

@@ -13,9 +13,7 @@ class CommentsService:
     async def list_comments(self, *, feedback_id: int) -> Sequence[Comments]:
         async with self._session_factory() as session:
             comments = await session.scalars(
-                select(Comments)
-                .where(Comments.feedback_id == feedback_id)
-                .order_by(Comments.id.desc())
+                select(Comments).where(Comments.feedback_id == feedback_id)
             )
             return list(comments)
 
