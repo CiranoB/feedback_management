@@ -22,6 +22,11 @@ Tornado remains the HTTP framework, so OpenAPI and Swagger UI are served as ordi
 # API documentation UI
 `swagger-ui-py` version 25.7.1 provides the locally served Swagger UI assets and Tornado route integration.
 
+# Interactive feedback view
+The browser view is available at `/web/{user-id}`. The path identifier is inserted into the
+existing API's `author_id` and `user_id` fields for comment and notation submissions, avoiding
+authentication infrastructure while keeping each user's one-notation-per-target constraint intact.
+
 # Database: Postgres
 Has widely doc available, it is open-source and free to use
 

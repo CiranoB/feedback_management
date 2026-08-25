@@ -57,6 +57,9 @@ When the API is running, open `http://localhost:8888/docs` for locally served Sw
 
 Feedback and comments record an `author_id`. A notation stores the submitting `user_id`, a value of `-1`, `0`, or `+1`, and targets exactly one feedback entry or comment. The database allows one notation from a user for each target; authentication can replace these plain identifier fields later.
 
-For a simple browser view of submitted entries, open `http://localhost:8888/display`.
+For the interactive browser view, open `http://localhost:8888/web/{user-id}`, replacing
+`{user-id}` with the user identifier to submit comments and notations as. For example,
+`http://localhost:8888/web/alex` posts Alex's comments and votes. The page lets that user
+comment on feedback and give `+1`, `0`, or `-1` notations to feedback and comments.
 
 At startup, the application runs `alembic upgrade head`. A new database is initialized with the latest schema and an existing database is upgraded only for pending migrations. Databases created by the earlier application startup path are recognized and stamped at the initial revision, without recreating their existing tables.

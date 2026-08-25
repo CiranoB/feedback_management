@@ -126,10 +126,11 @@ class DisplayHandler(RequestHandler):
         database_engine: AsyncEngine = self.settings["database_engine"]
         return async_sessionmaker(database_engine, expire_on_commit=False)
 
-    async def get(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
+    async def get(self, user_id: str) -> None:  # ty: ignore[invalid-method-override]
         feedback_entries: Sequence[Feedback] = await FeedbackService(
             self.session_factory
         ).list_feedback()
+        escaped_user_id = escape(user_id)
 
         cards = (
             "".join(
@@ -139,9 +140,17 @@ class DisplayHandler(RequestHandler):
                 '<div class="rating"><span>Rating</span><meter min="1" max="5" '
                 'value="{rating}">{rating}/5</meter><strong>{rating}/5</strong></div>'
                 '<div class="community-signal"><span>Community signal</span>'
-                '{notations}</div></div><details class="discussion"><summary>'
+                '{notations}</div></div><div class="actions">'
+                '<form class="notation-form" action="/api/feedback/{id}/notations">'
+                '<span>Rate this feedback</span><button name="value" value="1" type="submit">+1</button>'
+                '<button name="value" value="0" type="submit">0</button>'
+                '<button name="value" value="-1" type="submit">-1</button></form></div>'
+                '<details class="discussion"><summary>'
                 "<span>Discussion</span><span>{comment_count} comments</span></summary>"
-                "{comments}</details></article>".format(
+                '{comments}<form class="comment-form" action="/api/feedback/{id}/comments">'
+                '<label for="comment-{id}">Add a comment</label>'
+                '<textarea id="comment-{id}" name="content" required maxlength="10000"></textarea>'
+                '<button type="submit">Post comment</button></form></details></article>'.format(
                     id=entry.id,
                     note=escape(entry.note or "No note provided"),
                     rating=entry.rating,
@@ -155,7 +164,13 @@ class DisplayHandler(RequestHandler):
                                 f'<li><span class="comment-author">'
                                 f"{escape(comment.author_id)}</span>"
                                 f"<p>{escape(comment.content)}</p>"
-                                f"{render_notations(comment.notations)}</li>"
+                                f"{render_notations(comment.notations)}"
+                                f'<form class="notation-form comment-notation" '
+                                f'action="/api/comments/{comment.id}/notations">'
+                                f"<span>Rate comment</span>"
+                                f'<button name="value" value="1" type="submit">+1</button>'
+                                f'<button name="value" value="0" type="submit">0</button>'
+                                f'<button name="value" value="-1" type="submit">-1</button></form></li>'
                                 for comment in entry.comments
                             )
                         )
@@ -188,13 +203,25 @@ class DisplayHandler(RequestHandler):
             ".vote-summary{display:flex;align-items:center;gap:8px}.vote-strip{display:flex;flex-wrap:wrap;gap:4px}"
             ".vote{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 12px Georgia,serif}"
             ".vote.positive{background:#317d4c}.vote.negative{background:#b44a3c}.vote.neutral{background:#6b7780}"
-            ".vote-summary.positive strong{color:#317d4c}.vote-summary.negative strong{color:#b44a3c}.vote-empty,.empty{color:#58636c}"
+            ".vote-summary.positive strong{color:#317d4c}.vote-summary.neutral strong{color:#6b7780}.vote-summary.negative strong{color:#b44a3c}.vote-empty,.empty{color:#58636c}"
+            ".actions{margin-top:14px}.notation-form{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#58636c;font-size:13px}"
+            ".notation-form button,.comment-form button{border:1px solid #154c54;background:#fff;color:#154c54;padding:4px 8px;cursor:pointer;font:700 13px Georgia,serif}"
+            ".notation-form button:hover,.comment-form button:hover{background:#154c54;color:#fff}.comment-notation{margin-top:4px}"
             ".discussion{margin-top:16px}.discussion summary{cursor:pointer;color:#154c54;font-weight:bold;list-style:none}"
             ".discussion summary::-webkit-details-marker{display:none}.discussion summary::after{content:'+';font-size:20px}"
             ".discussion[open] summary::after{content:'-'} .comments{list-style:none;margin:14px 0 0;padding:0}"
             ".comments>li{border-top:1px solid #e4dfd3;padding:12px 0;display:grid;gap:7px}"
-            ".comment-author{font-weight:bold}.comments p{line-height:1.4;margin:0}@media(max-width:560px){main{padding:28px 16px}"
+            ".comment-author{font-weight:bold}.comments p{line-height:1.4;margin:0}.comment-form{display:grid;gap:8px;margin-top:16px}"
+            ".comment-form textarea{box-sizing:border-box;min-height:80px;padding:8px;border:1px solid #bdb6a8;border-radius:4px;font:16px Georgia,serif}"
+            ".comment-form button{justify-self:start}.error{color:#8b2b1c;font-weight:bold}@media(max-width:560px){main{padding:28px 16px}"
             "h1{font-size:32px}.signals{align-items:start;flex-direction:column}.rating{grid-template-columns:auto 1fr auto}}"
             "</style></head><body><main><h1>Community Feedback</h1>"
-            f"{cards}</main></body></html>"
+            f"<p>Signed in as <strong>{escaped_user_id}</strong></p>{cards}</main>"
+            f"<script>const userId={json.dumps(user_id)};"
+            "document.querySelectorAll('form').forEach((form)=>form.addEventListener('submit',async(event)=>{"
+            "event.preventDefault();const button=form.querySelector('button[type=submit],button[name=value]:focus');"
+            "const value=event.submitter?.value;const payload=form.classList.contains('comment-form')?{author_id:userId,content:new FormData(form).get('content')}:{user_id:userId,value:Number(value)};"
+            "const response=await fetch(form.action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});"
+            "if(response.ok){location.reload();return}let error=form.querySelector('.error');if(!error){error=document.createElement('p');error.className='error';form.append(error)}error.textContent='Unable to save your contribution.';}));</script>"
+            "</body></html>"
         )

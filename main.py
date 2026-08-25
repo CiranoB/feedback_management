@@ -55,7 +55,7 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
             (r"/api/feedback/([0-9]+)/comments", CommentsHandler),
             (r"/api/feedback/([0-9]+)/notations", FeedbackNotationHandler),
             (r"/api/comments/([0-9]+)/notations", CommentNotationHandler),
-            (r"/display", DisplayHandler),
+            (r"/web/([^/]+)", DisplayHandler),
             (r"/openapi.json", OpenApiHandler),
             (r"/docs/openapi.json", OpenApiHandler),
         ],
