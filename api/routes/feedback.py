@@ -4,11 +4,11 @@ import json
 from html import escape
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
-from api.models.feedback import Feedback, FeedbackStatus
+from api.models.feedback import FeedbackStatus
+from api.services.feedback import FeedbackService
 
 
 class FeedbackCreate(BaseModel):
@@ -35,19 +35,16 @@ class JsonHandler(RequestHandler):
 
 class FeedbackHandler(JsonHandler):
     @property
-    def session_factory(self) -> async_sessionmaker:
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
         database_engine: AsyncEngine = self.settings["database_engine"]
         return async_sessionmaker(database_engine, expire_on_commit=False)
 
     async def get(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
-        async with self.session_factory() as session:
-            feedback_entries = await session.scalars(
-                select(Feedback).order_by(Feedback.id.desc())
-            )
-            response = [
-                FeedbackResponse.model_validate(entry).model_dump(mode="json")
-                for entry in feedback_entries
-            ]
+        feedback_entries = await FeedbackService(self.session_factory).list_feedback()
+        response = [
+            FeedbackResponse.model_validate(entry).model_dump(mode="json")
+            for entry in feedback_entries
+        ]
         self.write(json.dumps(response))
 
     async def post(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
@@ -56,11 +53,10 @@ class FeedbackHandler(JsonHandler):
         except (json.JSONDecodeError, ValidationError) as error:
             raise HTTPError(422, reason=f"Invalid feedback payload: {error}") from error
 
-        async with self.session_factory() as session:
-            feedback = Feedback(**payload.model_dump())
-            session.add(feedback)
-            await session.commit()
-            await session.refresh(feedback)
+        feedback = await FeedbackService(self.session_factory).create_feedback(
+            note=payload.note,
+            rating=payload.rating,
+        )
 
         self.set_status(201)
         self.write(FeedbackResponse.model_validate(feedback).model_dump(mode="json"))
@@ -68,15 +64,12 @@ class FeedbackHandler(JsonHandler):
 
 class DisplayHandler(RequestHandler):
     @property
-    def session_factory(self) -> async_sessionmaker:
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
         database_engine: AsyncEngine = self.settings["database_engine"]
         return async_sessionmaker(database_engine, expire_on_commit=False)
 
     async def get(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
-        async with self.session_factory() as session:
-            feedback_entries = list(
-                await session.scalars(select(Feedback).order_by(Feedback.id.desc()))
-            )
+        feedback_entries = await FeedbackService(self.session_factory).list_feedback()
 
         cards = (
             "".join(
