@@ -9,6 +9,7 @@ from tornado.web import Application
 from api.config.global_settings import settings
 from api.database import create_database_engine, upgrade_database
 from api.models.comments import Comments  # noqa: F401
+from api.models.notation import Notation  # noqa: F401
 from api.routes.docs import OpenApiHandler, SwaggerUiHandler
 from api.routes.feedback import DisplayHandler, FeedbackHandler
 

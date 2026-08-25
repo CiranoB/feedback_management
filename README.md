@@ -48,8 +48,10 @@ POSTGRES_HOST=localhost POSTGRES_PORT=5433 uv run python main.py
 
 When the API is running, open `http://localhost:8888/docs` for Swagger UI. It documents and lets you execute these endpoints:
 
-- `POST /api/feedback` creates feedback with a required `rating` from 1 through 5 and an optional `note`.
+- `POST /api/feedback` creates feedback with a required `author_id`, a `rating` from 1 through 5, and an optional `note`.
 - `GET /api/feedback` lists feedback, newest first.
+
+Feedback and comments record an `author_id`. A notation stores the submitting `user_id`, a value of `-1`, `0`, or `+1`, and targets exactly one feedback entry or comment. The database allows one notation from a user for each target; authentication can replace these plain identifier fields later.
 
 For a simple browser view of submitted entries, open `http://localhost:8888/display`.
 

@@ -26,7 +26,10 @@ Has widely doc available, it is open-source and free to use
 The `Feedback` SQLAlchemy model contains an identifier, an optional text note, a required rating, and a manager-facing status. A database check constraint limits ratings to the challenge-defined range of 1 (bad) through 5 (very good). Status is an enum that defaults to `open` and supports the three required closed states: backlog, solved, and rejected.
 
 # Comments model
-The `Comments` model stores required text content and belongs to one `Feedback` record through a required foreign key. The reverse `Feedback.comments` relationship exposes all comments associated with a feedback entry.
+The `Comments` model stores a required `author_id` and text content, and belongs to one `Feedback` record through a required foreign key. The reverse `Feedback.comments` relationship exposes all comments associated with a feedback entry.
+
+# Notation model
+`Notation` stores a user's `-1`, `0`, or `+1` assessment of either one feedback entry or one comment. It retains the submitting `user_id` as a simple application field until authentication is introduced. Database constraints require exactly one target and permit each user only one notation per feedback entry and one per comment. Feedback and comments retain `author_id` so the API can subsequently prevent self-notation.
 
 # ORM usage: SQLAlchemy + asyncpg
 Since tornado is a framework to overcome C10k problem, a good pair to it is an async connection with the DB.
@@ -38,6 +41,9 @@ The application runs `alembic upgrade head` through the existing asynchronous SQ
 
 # Design pattern: MVC-ish
 Since it will be a small API, I will go by simplicity and only write 3 layers (controller, service and repository) - or something similar.
+
+# Service layer
+`FeedbackService`, `CommentsService`, and `NotationService` encapsulate asynchronous database operations behind a shared session-factory pattern. Comment operations list and create comments for a feedback entry; notation creation supports exactly one feedback or comment target, with database constraints enforcing target validity and per-user uniqueness.
 
 # Infra
 To make the code executable in another machine easily, the project provides a Docker Compose stack with PostgreSQL and the API. The same Compose file also supports local development by starting only the PostgreSQL service; the Tornado process then uses the default connection settings for `localhost`.

@@ -17,9 +17,11 @@ class FeedbackService:
             )
             return list(feedback_entries)
 
-    async def create_feedback(self, *, note: str | None, rating: int) -> Feedback:
+    async def create_feedback(
+        self, *, author_id: str, note: str | None, rating: int
+    ) -> Feedback:
         async with self._session_factory() as session:
-            feedback = Feedback(note=note, rating=rating)
+            feedback = Feedback(author_id=author_id, note=note, rating=rating)
             session.add(feedback)
             await session.commit()
             await session.refresh(feedback)

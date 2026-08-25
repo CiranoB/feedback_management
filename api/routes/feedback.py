@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from html import escape
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
-from api.models.feedback import FeedbackStatus
+from api.models.feedback import Feedback, FeedbackStatus
 from api.services.feedback import FeedbackService
 
 
 class FeedbackCreate(BaseModel):
+    author_id: str = Field(min_length=1, max_length=255)
     note: str | None = Field(default=None, max_length=10_000)
     rating: int = Field(ge=1, le=5)
 
@@ -20,6 +22,7 @@ class FeedbackResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    author_id: str
     note: str | None
     rating: int
     status: FeedbackStatus
@@ -49,11 +52,14 @@ class FeedbackHandler(JsonHandler):
 
     async def post(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
         try:
-            payload = FeedbackCreate.model_validate(json.loads(self.request.body))
+            payload: FeedbackCreate = FeedbackCreate.model_validate(
+                json.loads(self.request.body)
+            )
         except (json.JSONDecodeError, ValidationError) as error:
             raise HTTPError(422, reason=f"Invalid feedback payload: {error}") from error
 
         feedback = await FeedbackService(self.session_factory).create_feedback(
+            author_id=payload.author_id,
             note=payload.note,
             rating=payload.rating,
         )
@@ -69,7 +75,9 @@ class DisplayHandler(RequestHandler):
         return async_sessionmaker(database_engine, expire_on_commit=False)
 
     async def get(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
-        feedback_entries = await FeedbackService(self.session_factory).list_feedback()
+        feedback_entries: Sequence[Feedback] = await FeedbackService(
+            self.session_factory
+        ).list_feedback()
 
         cards = (
             "".join(
