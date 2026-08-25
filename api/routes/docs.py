@@ -251,8 +251,7 @@ class OpenApiHandler(RequestHandler):
                                     },
                                 },
                                 "notations": {
-                                    "type": "array",
-                                    "items": {"$ref": "#/components/schemas/Notation"},
+                                    "$ref": "#/components/schemas/NotationSummary"
                                 },
                             },
                         },
@@ -274,10 +273,7 @@ class OpenApiHandler(RequestHandler):
                                     "required": ["notations"],
                                     "properties": {
                                         "notations": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Notation"
-                                            },
+                                            "$ref": "#/components/schemas/NotationSummary"
                                         }
                                     },
                                 },
@@ -318,6 +314,16 @@ class OpenApiHandler(RequestHandler):
                                 },
                                 "feedback_id": {"type": ["integer", "null"]},
                                 "comment_id": {"type": ["integer", "null"]},
+                            },
+                        },
+                        "NotationSummary": {
+                            "type": "object",
+                            "description": "Counts of notations by value; individual notation details are omitted.",
+                            "required": ["positive", "neutral", "negative"],
+                            "properties": {
+                                "positive": {"type": "integer", "minimum": 0},
+                                "neutral": {"type": "integer", "minimum": 0},
+                                "negative": {"type": "integer", "minimum": 0},
                             },
                         },
                     }

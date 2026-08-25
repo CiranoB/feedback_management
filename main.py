@@ -1,11 +1,12 @@
 import asyncio
+from pathlib import Path
 
 import tornado
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 from swagger_ui import api_doc
-from tornado.web import Application
+from tornado.web import Application, StaticFileHandler
 
 from api.config.global_settings import settings
 from api.database import create_database_engine, upgrade_database
@@ -46,6 +47,7 @@ class DatabaseHealthHandler(tornado.web.RequestHandler):
 
 
 def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
+    web_resources_path = Path(__file__).parent / "web_resources"
     app = tornado.web.Application(
         handlers=[
             (r"/", MainHandler),
@@ -56,6 +58,7 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
             (r"/api/feedback/([0-9]+)/notations", FeedbackNotationHandler),
             (r"/api/comments/([0-9]+)/notations", CommentNotationHandler),
             (r"/web/([^/]+)", DisplayHandler),
+            (r"/web_resources/(.*)", StaticFileHandler, {"path": web_resources_path}),
             (r"/openapi.json", OpenApiHandler),
             (r"/docs/openapi.json", OpenApiHandler),
         ],

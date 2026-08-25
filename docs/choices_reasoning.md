@@ -23,9 +23,11 @@ Tornado remains the HTTP framework, so OpenAPI and Swagger UI are served as ordi
 `swagger-ui-py` version 25.7.1 provides the locally served Swagger UI assets and Tornado route integration.
 
 # Interactive feedback view
-The browser view is available at `/web/{user-id}`. The path identifier is inserted into the
-existing API's `author_id` and `user_id` fields for comment and notation submissions, avoiding
-authentication infrastructure while keeping each user's one-notation-per-target constraint intact.
+The browser view is available at `/web/{user-id}`. That route redirects to the static HTML in
+`web_resources/`, which has separately maintained CSS and JavaScript files served by Tornado.
+The path identifier is passed as a query parameter and inserted into the existing API's
+`author_id` and `user_id` fields for comment and notation submissions, avoiding authentication
+infrastructure while keeping each user's one-notation-per-target constraint intact.
 
 # Database: Postgres
 Has widely doc available, it is open-source and free to use
@@ -38,6 +40,9 @@ The `Comments` model stores a required `author_id` and text content, and belongs
 
 # Notation model
 `Notation` stores a user's `-1`, `0`, or `+1` assessment of either one feedback entry or one comment. It retains the submitting `user_id` as a simple application field until authentication is introduced. Database constraints require exactly one target and permit each user only one notation per feedback entry and one per comment. Feedback and comments retain `author_id` so the API can subsequently prevent self-notation.
+
+# Notation list representation
+The feedback-list response exposes notation totals as `positive`, `neutral`, and `negative` counts for each feedback item and nested comment. This provides the community signal required by the view without returning individual user identifiers or vote records.
 
 # ORM usage: SQLAlchemy + asyncpg
 Since tornado is a framework to overcome C10k problem, a good pair to it is an async connection with the DB.

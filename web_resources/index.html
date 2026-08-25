@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Feedback</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>Community Feedback</h1>
+      <p>Signed in as <strong id="user-id"></strong></p>
+      <form id="feedback-form" class="feedback-form">
+        <h2>New feedback</h2>
+        <label for="feedback-note">What would you like to share?</label>
+        <textarea id="feedback-note" name="note" maxlength="10000"></textarea>
+        <label for="feedback-rating">Rating</label>
+        <select id="feedback-rating" name="rating" required>
+          <option value="1">1 - Bad</option>
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5 - Very good</option>
+        </select>
+        <button type="submit">Post feedback</button>
+      </form>
+      <section id="feedback-list" aria-live="polite"></section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,306 @@
+body {
+  margin: 0;
+  background: #f5f3ea;
+  color: #17222d;
+  font: 16px Georgia, serif;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+h1 {
+  margin: 0 0 32px;
+  color: #154c54;
+  font: 700 40px/1.1 Georgia, serif;
+}
+
+article,
+.feedback-form {
+  box-sizing: border-box;
+  border: 1px solid #d7d1c2;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 2px 8px #17222d12;
+}
+
+article {
+  margin: 12px 0;
+  padding: 20px 24px;
+}
+
+.feedback-form {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 20px 24px;
+}
+
+.feedback-form h2 {
+  margin: 0;
+  color: #154c54;
+  font-size: 20px;
+}
+
+.feedback-form label,
+.comment-author {
+  font-weight: bold;
+}
+
+.feedback-form select {
+  justify-self: start;
+  padding: 5px;
+  font: 16px Georgia, serif;
+}
+
+article header,
+.signals,
+.discussion summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.feedback-id {
+  color: #154c54;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.status {
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #d8eadc;
+  color: #1e5b34;
+  font: 700 13px Georgia, serif;
+  text-transform: capitalize;
+}
+
+.status.closed_rejected {
+  background: #f3d7d1;
+  color: #8b2b1c;
+}
+
+.status.closed_backlog {
+  background: #e7dfb9;
+  color: #675b0d;
+}
+
+.status.closed_solved {
+  background: #d4e7e8;
+  color: #16555b;
+}
+
+.note {
+  margin: 16px 0;
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.signals {
+  border-top: 1px solid #d7d1c2;
+  border-bottom: 1px solid #d7d1c2;
+  padding: 12px 0;
+}
+
+.rating,
+.community-signal {
+  display: grid;
+  gap: 5px;
+  color: #58636c;
+  font-size: 13px;
+}
+
+.rating {
+  grid-template-columns: auto 110px auto;
+  align-items: center;
+}
+
+meter {
+  width: 110px;
+  accent-color: #d07631;
+}
+
+.rating strong,
+.vote-summary strong {
+  color: #17222d;
+  font-size: 16px;
+}
+
+.vote-summary,
+.vote-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vote-strip {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.vote {
+  box-sizing: border-box;
+  display: inline-flex;
+  min-width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 0 6px;
+  white-space: nowrap;
+  color: #fff;
+  font: 700 12px Georgia, serif;
+}
+
+.vote.positive {
+  background: #317d4c;
+}
+
+.vote.negative {
+  background: #b44a3c;
+}
+
+.vote.neutral {
+  background: #6b7780;
+}
+
+.vote-summary.positive strong {
+  color: #317d4c;
+}
+
+.vote-summary.neutral strong,
+.vote-empty,
+.empty {
+  color: #58636c;
+}
+
+.vote-summary.negative strong,
+.error {
+  color: #b44a3c;
+}
+
+.actions {
+  margin-top: 14px;
+}
+
+.notation-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #58636c;
+  font-size: 13px;
+}
+
+.notation-form button,
+.comment-form button,
+.feedback-form button {
+  border: 1px solid #154c54;
+  background: #fff;
+  color: #154c54;
+  cursor: pointer;
+  padding: 4px 8px;
+  font: 700 13px Georgia, serif;
+}
+
+.notation-form button:hover,
+.comment-form button:hover,
+.feedback-form button:hover {
+  background: #154c54;
+  color: #fff;
+}
+
+.comment-notation {
+  margin-top: 4px;
+}
+
+.discussion {
+  margin-top: 16px;
+}
+
+.discussion summary {
+  cursor: pointer;
+  color: #154c54;
+  font-weight: bold;
+  list-style: none;
+}
+
+.discussion summary::-webkit-details-marker {
+  display: none;
+}
+
+.discussion summary::after {
+  content: "+";
+  font-size: 20px;
+}
+
+.discussion[open] summary::after {
+  content: "-";
+}
+
+.comments {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comments > li {
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid #e4dfd3;
+  padding: 12px 0;
+}
+
+.comments p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.comment-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.comment-form textarea,
+.feedback-form textarea {
+  box-sizing: border-box;
+  min-height: 80px;
+  border: 1px solid #bdb6a8;
+  border-radius: 4px;
+  padding: 8px;
+  font: 16px Georgia, serif;
+}
+
+.comment-form button,
+.feedback-form button {
+  justify-self: start;
+}
+
+.error {
+  margin: 0;
+  font-weight: bold;
+}
+
+@media (max-width: 560px) {
+  main {
+    padding: 28px 16px;
+  }
+
+  h1 {
+    font-size: 32px;
+  }
+
+  .signals {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .rating {
+    grid-template-columns: auto 1fr auto;
+  }
+}
