@@ -1,8 +1,21 @@
-const userId = new URLSearchParams(window.location.search).get("user_id");
+let userId = new URLSearchParams(window.location.search).get("user_id") || "";
 const feedbackList = document.querySelector("#feedback-list");
 const feedbackForm = document.querySelector("#feedback-form");
+const userIdLabel = document.querySelector("#user-id");
+const userSwitcher = document.querySelector("#user-switcher");
+const userIdInput = document.querySelector("#user-id-input");
+const productManagerLink = document.querySelector("#product-manager-link");
 
-document.querySelector("#user-id").textContent = userId || "unknown";
+function updateSignedInUser() {
+  userIdLabel.textContent = userId || "unknown";
+  userIdInput.value = userId;
+
+  const productManagerUrl = new URL("product_manager.html", window.location.href);
+  if (userId) {
+    productManagerUrl.searchParams.set("user_id", userId);
+  }
+  productManagerLink.href = productManagerUrl.pathname + productManagerUrl.search;
+}
 
 function appendText(parent, tagName, text, className) {
   const element = document.createElement(tagName);
@@ -115,12 +128,6 @@ function renderFeedback(feedback) {
   const article = document.createElement("article");
   const header = document.createElement("header");
   appendText(header, "span", `#${feedback.id}`, "feedback-id");
-  appendText(
-    header,
-    "span",
-    feedback.status.replaceAll("_", " "),
-    `status ${feedback.status}`,
-  );
   article.append(header);
   appendText(article, "p", feedback.note || "No note provided", "note");
 
@@ -226,4 +233,14 @@ feedbackForm.addEventListener("submit", async (event) => {
   });
 });
 
+userSwitcher.addEventListener("submit", (event) => {
+  event.preventDefault();
+  userId = userIdInput.value.trim();
+  const currentUrl = new URL(window.location.href);
+  currentUrl.searchParams.set("user_id", userId);
+  window.history.replaceState({}, "", currentUrl);
+  updateSignedInUser();
+});
+
+updateSignedInUser();
 loadFeedback();

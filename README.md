@@ -49,9 +49,11 @@ POSTGRES_HOST=localhost POSTGRES_PORT=5433 uv run python main.py
 When the API is running, open `http://localhost:8888/docs` for locally served Swagger UI. It documents and lets you execute these endpoints:
 
 - `POST /api/feedback` creates feedback with a required `author_id`, a `rating` from 1 through 5, and an optional `note`.
-- `GET /api/feedback` lists feedback, newest first, including each feedback item's
-	notation counts (`positive`, `neutral`, and `negative`) and comments; each comment
-	includes its own notation counts. Individual notation details are not returned.
+- `GET /api/feedback` lists the community feedback view, newest first. It includes the
+	feedback note, rating, notation counts, and comments with their notation counts; it
+	does not expose submitter identifiers or management status.
+- `GET /api/product-manager/feedback` lists the product manager feedback view with the
+	same community data plus the feedback submitter identifier and management status.
 - `GET` and `POST /api/feedback/{feedback_id}/comments` list and add feedback comments.
 - `POST /api/feedback/{feedback_id}/notations` adds a notation to feedback.
 - `POST /api/comments/{comment_id}/notations` adds a notation to a comment.
@@ -62,7 +64,13 @@ For the interactive browser view, open `http://localhost:8888/web/{user-id}`, re
 `{user-id}` with the user identifier to submit comments and notations as. For example,
 `http://localhost:8888/web/alex` posts Alex's comments and votes. The page lets that user
 comment on feedback and give `+1`, `0`, or `-1` notations to feedback and comments.
+Use the **Switch user** control on the community page to change the active identifier;
+all subsequent feedback, comments, and notations use the newly selected user.
 This URL redirects to the static page served from `web_resources/`; its HTML, CSS, and
 JavaScript are kept there separately from the API route handlers.
+
+The user page links to the read-only product manager visualization, which uses
+`GET /api/product-manager/feedback` to show management status and submitter information.
+Feedback merging is intentionally not implemented.
 
 At startup, the application runs `alembic upgrade head`. A new database is initialized with the latest schema and an existing database is upgraded only for pending migrations. Databases created by the earlier application startup path are recognized and stamped at the initial revision, without recreating their existing tables.

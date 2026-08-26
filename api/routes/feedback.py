@@ -53,17 +53,32 @@ class CommentResponse(BaseModel):
         )
 
 
-class FeedbackResponse(BaseModel):
+class UserFeedbackResponse(BaseModel):
     id: int
-    author_id: str
     note: str | None
     rating: int
-    status: FeedbackStatus
     comments: list[CommentResponse]
     notations: NotationSummary
 
     @classmethod
-    def from_model(cls, feedback: Feedback) -> FeedbackResponse:
+    def from_model(cls, feedback: Feedback) -> UserFeedbackResponse:
+        return cls(
+            id=feedback.id,
+            note=feedback.note,
+            rating=feedback.rating,
+            comments=[
+                CommentResponse.from_model(comment) for comment in feedback.comments
+            ],
+            notations=NotationSummary.from_notations(feedback.notations),
+        )
+
+
+class ProductManagerFeedbackResponse(UserFeedbackResponse):
+    author_id: str
+    status: FeedbackStatus
+
+    @classmethod
+    def from_model(cls, feedback: Feedback) -> ProductManagerFeedbackResponse:
         return cls(
             id=feedback.id,
             author_id=feedback.author_id,
@@ -94,7 +109,7 @@ class FeedbackHandler(JsonHandler):
     async def get(self, *args: str, **kwargs: str) -> None:  # ty: ignore[invalid-method-override]
         feedback_entries = await FeedbackService(self.session_factory).list_feedback()
         response = [
-            FeedbackResponse.from_model(entry).model_dump(mode="json")
+            UserFeedbackResponse.from_model(entry).model_dump(mode="json")
             for entry in feedback_entries
         ]
         self.write(json.dumps(response))
@@ -115,16 +130,24 @@ class FeedbackHandler(JsonHandler):
 
         self.set_status(201)
         self.write(
-            FeedbackResponse(
+            UserFeedbackResponse(
                 id=feedback.id,
-                author_id=feedback.author_id,
                 note=feedback.note,
                 rating=feedback.rating,
-                status=feedback.status,
                 comments=[],
                 notations=NotationSummary(),
             ).model_dump(mode="json")
         )
+
+
+class ProductManagerFeedbackHandler(FeedbackHandler):
+    async def get(self, *args: str, **kwargs: str) -> None:
+        feedback_entries = await FeedbackService(self.session_factory).list_feedback()
+        response = [
+            ProductManagerFeedbackResponse.from_model(entry).model_dump(mode="json")
+            for entry in feedback_entries
+        ]
+        self.write(json.dumps(response))
 
 
 def render_notations(notations: Sequence[Notation]) -> str:

@@ -17,6 +17,35 @@ h1 {
   font: 700 40px/1.1 Georgia, serif;
 }
 
+.session-bar,
+.user-switcher {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.session-bar {
+  margin-bottom: 24px;
+}
+
+.session-bar p {
+  margin: 0;
+}
+
+.user-switcher label {
+  font-weight: bold;
+}
+
+.user-switcher input {
+  box-sizing: border-box;
+  width: 110px;
+  border: 1px solid #bdb6a8;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font: 16px Georgia, serif;
+}
+
 article,
 .feedback-form {
   box-sizing: border-box;
@@ -198,7 +227,8 @@ meter {
 
 .notation-form button,
 .comment-form button,
-.feedback-form button {
+.feedback-form button,
+.user-switcher button {
   border: 1px solid #154c54;
   background: #fff;
   color: #154c54;
@@ -209,7 +239,8 @@ meter {
 
 .notation-form button:hover,
 .comment-form button:hover,
-.feedback-form button:hover {
+.feedback-form button:hover,
+.user-switcher button:hover {
   background: #154c54;
   color: #fff;
 }
@@ -293,6 +324,11 @@ meter {
 
   h1 {
     font-size: 32px;
+  }
+
+  .session-bar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .signals {

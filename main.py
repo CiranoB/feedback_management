@@ -14,7 +14,11 @@ from api.models.comments import Comments  # noqa: F401
 from api.models.notation import Notation  # noqa: F401
 from api.routes.comments import CommentsHandler
 from api.routes.docs import OpenApiHandler
-from api.routes.feedback import DisplayHandler, FeedbackHandler
+from api.routes.feedback import (
+    DisplayHandler,
+    FeedbackHandler,
+    ProductManagerFeedbackHandler,
+)
 from api.routes.notation import CommentNotationHandler, FeedbackNotationHandler
 
 
@@ -39,6 +43,7 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
         handlers=[
             (r"/health/db", DatabaseHealthHandler),
             (r"/api/feedback", FeedbackHandler),
+            (r"/api/product-manager/feedback", ProductManagerFeedbackHandler),
             (r"/api/feedback/([0-9]+)/comments", CommentsHandler),
             (r"/api/feedback/([0-9]+)/notations", FeedbackNotationHandler),
             (r"/api/comments/([0-9]+)/notations", CommentNotationHandler),

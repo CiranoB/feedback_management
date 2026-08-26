@@ -19,7 +19,7 @@ class OpenApiHandler(RequestHandler):
                                             "schema": {
                                                 "type": "array",
                                                 "items": {
-                                                    "$ref": "#/components/schemas/Feedback"
+                                                    "$ref": "#/components/schemas/UserFeedback"
                                                 },
                                             }
                                         }
@@ -62,7 +62,7 @@ class OpenApiHandler(RequestHandler):
                                     "content": {
                                         "application/json": {
                                             "schema": {
-                                                "$ref": "#/components/schemas/Feedback"
+                                                "$ref": "#/components/schemas/UserFeedback"
                                             }
                                         }
                                     },
@@ -70,6 +70,26 @@ class OpenApiHandler(RequestHandler):
                                 "422": {"description": "Invalid feedback payload"},
                             },
                         },
+                    },
+                    "/api/product-manager/feedback": {
+                        "get": {
+                            "summary": "List feedback for product management",
+                            "responses": {
+                                "200": {
+                                    "description": "Feedback entries with management fields, newest first",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/components/schemas/ProductManagerFeedback"
+                                                },
+                                            }
+                                        }
+                                    },
+                                }
+                            },
+                        }
                     },
                     "/api/feedback/{feedback_id}/comments": {
                         "parameters": [
@@ -215,34 +235,22 @@ class OpenApiHandler(RequestHandler):
                 },
                 "components": {
                     "schemas": {
-                        "Feedback": {
+                        "UserFeedback": {
                             "type": "object",
                             "required": [
                                 "id",
-                                "author_id",
                                 "note",
                                 "rating",
-                                "status",
                                 "comments",
                                 "notations",
                             ],
                             "properties": {
                                 "id": {"type": "integer"},
-                                "author_id": {"type": "string"},
                                 "note": {"type": ["string", "null"]},
                                 "rating": {
                                     "type": "integer",
                                     "minimum": 1,
                                     "maximum": 5,
-                                },
-                                "status": {
-                                    "type": "string",
-                                    "enum": [
-                                        "open",
-                                        "closed_backlog",
-                                        "closed_solved",
-                                        "closed_rejected",
-                                    ],
                                 },
                                 "comments": {
                                     "type": "array",
@@ -254,6 +262,27 @@ class OpenApiHandler(RequestHandler):
                                     "$ref": "#/components/schemas/NotationSummary"
                                 },
                             },
+                        },
+                        "ProductManagerFeedback": {
+                            "allOf": [
+                                {"$ref": "#/components/schemas/UserFeedback"},
+                                {
+                                    "type": "object",
+                                    "required": ["author_id", "status"],
+                                    "properties": {
+                                        "author_id": {"type": "string"},
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "open",
+                                                "closed_backlog",
+                                                "closed_solved",
+                                                "closed_rejected",
+                                            ],
+                                        },
+                                    },
+                                },
+                            ]
                         },
                         "Comment": {
                             "type": "object",

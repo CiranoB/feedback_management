@@ -10,7 +10,15 @@
   <body>
     <main>
       <h1>Community Feedback</h1>
-      <p>Signed in as <strong id="user-id"></strong></p>
+      <div class="session-bar">
+        <p>Signed in as <strong id="user-id"></strong></p>
+        <form id="user-switcher" class="user-switcher">
+          <label for="user-id-input">Switch user</label>
+          <input id="user-id-input" name="user_id" required>
+          <button type="submit">Switch</button>
+        </form>
+        <a id="product-manager-link" href="product_manager.html">Product manager view</a>
+      </div>
       <form id="feedback-form" class="feedback-form">
         <h2>New feedback</h2>
         <label for="feedback-note">What would you like to share?</label>
