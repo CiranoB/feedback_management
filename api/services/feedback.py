@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from api.models.comments import Comments
-from api.models.feedback import Feedback
+from api.models.feedback import Feedback, FeedbackStatus
 
 
 class FeedbackService:
@@ -32,4 +32,23 @@ class FeedbackService:
             session.add(feedback)
             await session.commit()
             await session.refresh(feedback)
+            return feedback
+
+    async def update_feedback_status(
+        self, *, feedback_id: int, status: FeedbackStatus
+    ) -> Feedback | None:
+        async with self._session_factory() as session:
+            feedback = await session.scalar(
+                select(Feedback)
+                .options(
+                    selectinload(Feedback.comments).selectinload(Comments.notations),
+                    selectinload(Feedback.notations),
+                )
+                .where(Feedback.id == feedback_id)
+            )
+            if feedback is None:
+                return None
+
+            feedback.status = status
+            await session.commit()
             return feedback

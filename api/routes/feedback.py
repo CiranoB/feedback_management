@@ -21,6 +21,10 @@ class FeedbackCreate(BaseModel):
     rating: int = Field(ge=1, le=5)
 
 
+class FeedbackStatusUpdate(BaseModel):
+    status: FeedbackStatus
+
+
 class NotationSummary(BaseModel):
     positive: int = 0
     neutral: int = 0
@@ -148,6 +152,33 @@ class ProductManagerFeedbackHandler(FeedbackHandler):
             for entry in feedback_entries
         ]
         self.write(json.dumps(response))
+
+
+class ProductManagerFeedbackDetailHandler(JsonHandler):
+    @property
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
+        database_engine: AsyncEngine = self.settings["database_engine"]
+        return async_sessionmaker(database_engine, expire_on_commit=False)
+
+    async def patch(self, feedback_id: str) -> None:  # ty: ignore[invalid-method-override]
+        try:
+            payload: FeedbackStatusUpdate = FeedbackStatusUpdate.model_validate(
+                json.loads(self.request.body)
+            )
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise HTTPError(
+                422, reason=f"Invalid feedback status payload: {error}"
+            ) from error
+
+        feedback = await FeedbackService(self.session_factory).update_feedback_status(
+            feedback_id=int(feedback_id), status=payload.status
+        )
+        if feedback is None:
+            raise HTTPError(404, reason="Feedback not found")
+
+        self.write(
+            ProductManagerFeedbackResponse.from_model(feedback).model_dump(mode="json")
+        )
 
 
 def render_notations(notations: Sequence[Notation]) -> str:

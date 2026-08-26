@@ -17,6 +17,7 @@ from api.routes.docs import OpenApiHandler
 from api.routes.feedback import (
     DisplayHandler,
     FeedbackHandler,
+    ProductManagerFeedbackDetailHandler,
     ProductManagerFeedbackHandler,
 )
 from api.routes.notation import CommentNotationHandler, FeedbackNotationHandler
@@ -44,6 +45,10 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
             (r"/health/db", DatabaseHealthHandler),
             (r"/api/feedback", FeedbackHandler),
             (r"/api/product-manager/feedback", ProductManagerFeedbackHandler),
+            (
+                r"/api/product-manager/feedback/([0-9]+)",
+                ProductManagerFeedbackDetailHandler,
+            ),
             (r"/api/feedback/([0-9]+)/comments", CommentsHandler),
             (r"/api/feedback/([0-9]+)/notations", FeedbackNotationHandler),
             (r"/api/comments/([0-9]+)/notations", CommentNotationHandler),

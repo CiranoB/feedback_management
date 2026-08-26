@@ -7,10 +7,21 @@ class OpenApiHandler(RequestHandler):
             {
                 "openapi": "3.1.0",
                 "info": {"title": "Feedback Management API", "version": "0.1.0"},
+                "tags": [
+                    {
+                        "name": "User feedback",
+                        "description": "Community feedback, comments, and notations.",
+                    },
+                    {
+                        "name": "Product manager",
+                        "description": "Feedback data for product management.",
+                    },
+                ],
                 "paths": {
                     "/api/feedback": {
                         "get": {
                             "summary": "List feedback",
+                            "tags": ["User feedback"],
                             "responses": {
                                 "200": {
                                     "description": "Feedback entries, newest first",
@@ -29,6 +40,7 @@ class OpenApiHandler(RequestHandler):
                         },
                         "post": {
                             "summary": "Create feedback",
+                            "tags": ["User feedback"],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -74,6 +86,7 @@ class OpenApiHandler(RequestHandler):
                     "/api/product-manager/feedback": {
                         "get": {
                             "summary": "List feedback for product management",
+                            "tags": ["Product manager"],
                             "responses": {
                                 "200": {
                                     "description": "Feedback entries with management fields, newest first",
@@ -91,6 +104,44 @@ class OpenApiHandler(RequestHandler):
                             },
                         }
                     },
+                    "/api/product-manager/feedback/{feedback_id}": {
+                        "parameters": [
+                            {
+                                "name": "feedback_id",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "integer", "minimum": 1},
+                            }
+                        ],
+                        "patch": {
+                            "summary": "Update feedback status",
+                            "tags": ["Product manager"],
+                            "requestBody": {
+                                "required": True,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/FeedbackStatusUpdate"
+                                        }
+                                    }
+                                },
+                            },
+                            "responses": {
+                                "200": {
+                                    "description": "Updated feedback",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/ProductManagerFeedback"
+                                            }
+                                        }
+                                    },
+                                },
+                                "404": {"description": "Feedback not found"},
+                                "422": {"description": "Invalid status payload"},
+                            },
+                        },
+                    },
                     "/api/feedback/{feedback_id}/comments": {
                         "parameters": [
                             {
@@ -102,6 +153,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "get": {
                             "summary": "List feedback comments",
+                            "tags": ["User feedback"],
                             "responses": {
                                 "200": {
                                     "description": "Comments for the feedback entry",
@@ -120,6 +172,7 @@ class OpenApiHandler(RequestHandler):
                         },
                         "post": {
                             "summary": "Add a feedback comment",
+                            "tags": ["User feedback"],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -171,6 +224,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "post": {
                             "summary": "Add notation to feedback",
+                            "tags": ["User feedback"],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -207,6 +261,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "post": {
                             "summary": "Add notation to a comment",
+                            "tags": ["User feedback"],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -283,6 +338,21 @@ class OpenApiHandler(RequestHandler):
                                     },
                                 },
                             ]
+                        },
+                        "FeedbackStatusUpdate": {
+                            "type": "object",
+                            "required": ["status"],
+                            "properties": {
+                                "status": {
+                                    "type": "string",
+                                    "enum": [
+                                        "open",
+                                        "closed_backlog",
+                                        "closed_solved",
+                                        "closed_rejected",
+                                    ],
+                                }
+                            },
                         },
                         "Comment": {
                             "type": "object",

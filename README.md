@@ -54,6 +54,9 @@ When the API is running, open `http://localhost:8888/docs` for locally served Sw
 	does not expose submitter identifiers or management status.
 - `GET /api/product-manager/feedback` lists the product manager feedback view with the
 	same community data plus the feedback submitter identifier and management status.
+- `PATCH /api/product-manager/feedback/{feedback_id}` changes a ticket's management
+	status. Send one of `open`, `closed_backlog`, `closed_solved`, or `closed_rejected`
+	in a JSON body such as `{"status":"closed_solved"}`.
 - `GET` and `POST /api/feedback/{feedback_id}/comments` list and add feedback comments.
 - `POST /api/feedback/{feedback_id}/notations` adds a notation to feedback.
 - `POST /api/comments/{comment_id}/notations` adds a notation to a comment.
@@ -69,8 +72,8 @@ all subsequent feedback, comments, and notations use the newly selected user.
 This URL redirects to the static page served from `web_resources/`; its HTML, CSS, and
 JavaScript are kept there separately from the API route handlers.
 
-The user page links to the read-only product manager visualization, which uses
-`GET /api/product-manager/feedback` to show management status and submitter information.
+The user page links to the product manager visualization, which shows management status and
+submitter information. The product manager can update each ticket's status from its selector.
 Feedback merging is intentionally not implemented.
 
 At startup, the application runs `alembic upgrade head`. A new database is initialized with the latest schema and an existing database is upgraded only for pending migrations. Databases created by the earlier application startup path are recognized and stamped at the initial revision, without recreating their existing tables.

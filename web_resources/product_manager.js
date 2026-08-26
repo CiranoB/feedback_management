@@ -23,14 +23,57 @@ function renderNotations(notations) {
   return summary;
 }
 
+function formatStatus(status) {
+  return status.replaceAll("_", " ");
+}
+
+function renderStatusControl(feedback, statusLabel) {
+  const control = document.createElement("label");
+  control.className = "status-control";
+  appendText(control, "span", "Status");
+  const select = document.createElement("select");
+  ["open", "closed_backlog", "closed_solved", "closed_rejected"].forEach((status) => {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = formatStatus(status);
+    option.selected = status === feedback.status;
+    select.append(option);
+  });
+  select.addEventListener("change", async () => {
+    const previousStatus = feedback.status;
+    select.disabled = true;
+    try {
+      const response = await fetch(`/api/product-manager/feedback/${feedback.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: select.value }),
+      });
+      if (!response.ok) {
+        throw new Error("Unable to update status");
+      }
+      const updatedFeedback = await response.json();
+      feedback.status = updatedFeedback.status;
+      statusLabel.textContent = formatStatus(feedback.status);
+      statusLabel.className = `status ${feedback.status}`;
+    } catch {
+      select.value = previousStatus;
+      appendText(control, "span", "Unable to update status.", "error");
+    } finally {
+      select.disabled = false;
+    }
+  });
+  control.append(select);
+  return control;
+}
+
 function renderFeedback(feedback) {
   const article = document.createElement("article");
   const header = document.createElement("header");
   appendText(header, "span", `#${feedback.id}`, "feedback-id");
-  appendText(
+  const statusLabel = appendText(
     header,
     "span",
-    feedback.status.replaceAll("_", " "),
+    formatStatus(feedback.status),
     `status ${feedback.status}`,
   );
   article.append(header);
@@ -50,6 +93,7 @@ function renderFeedback(feedback) {
   communitySignal.append(renderNotations(feedback.notations));
   signals.append(communitySignal);
   article.append(signals);
+  article.append(renderStatusControl(feedback, statusLabel));
 
   const discussion = document.createElement("details");
   discussion.className = "discussion";
