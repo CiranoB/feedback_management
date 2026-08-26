@@ -1,14 +1,23 @@
 # Authentication + Authorization process
-Right now, just for demonstration purposes, I'm realying on a path variable to identify the user, but this is totally NOT prod ready. If this project will go live, it is really needed to use something to authenticate users. It could be a 3rd party auth just as (Sign with Google, for example)
+For demonstration purposes, the application currently relies on a path variable to identify users. This is not production-ready. Before deploying this project, users should be authenticated through a third-party provider, such as Google Sign-In.
 
 # Expose swagger on prod. env.
-The swagger must be not available for the client. Again, this is just because is not a PROD. ready app.
+Swagger documentation should not be available to clients in the production environment. It is currently exposed only because this is not a production-ready application.
 
 # MVC -> Clean Arch
-Since the number of features are really low, it was not needed to create a complex. design pattern fully reusable. But if this system grows, it definetly would be better some more robust system with SOLID principles.
+Because the number of features is currently small, a fully reusable, complex design pattern was unnecessary. If the system grows, it would be better to adopt a more robust architecture based on SOLID principles.
 
 # Database Connection Pools
-I did not perform any study about the database/api capacity in heavy workload scenario. In real projects, it is needed to understand how many simuteniously connections each API and DB replica are able to handle.
+No study has been performed on the database and API capacity under heavy workloads. In a production system, it would be necessary to determine how many simultaneous connections each API instance and database replica can handle.
 
 # Branch strategy, CI/CD
-Since I was the only one developing, I commit everything direclty to main, but this is something that when I am working in a team, something very "avoidable". I really enjoy doing [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) or [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow), but in that case will be only 
+Because I was the only developer, I committed everything directly to `main`. In a team, this should be avoided. I prefer [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) or [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow), together with a CI/CD pipeline.
+
+# Load test
+If this API is expected to handle heavy workloads, load testing should be performed to assess its behavior under multiple concurrent requests.
+
+# Telemetry
+The API lacks telemetry.
+
+# Pagination
+As the amount of data grows, pagination will become essential.

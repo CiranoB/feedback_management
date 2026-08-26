@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 
 import tornado
@@ -21,6 +22,16 @@ from api.routes.feedback import (
     ProductManagerFeedbackHandler,
 )
 from api.routes.notation import CommentNotationHandler, FeedbackNotationHandler
+
+logger = logging.getLogger(__name__)
+
+
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        force=True,
+    )
 
 
 class DatabaseHealthHandler(tornado.web.RequestHandler):
@@ -75,8 +86,10 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
 async def main():
     database_engine = create_database_engine(settings.database_url)
     await upgrade_database(database_engine)
+    configure_logging()
     app: Application = make_app(database_engine)
     app.listen(port=settings.port)
+    logger.info("Feedback API listening on port %s", settings.port)
 
     try:
         await asyncio.Event().wait()
