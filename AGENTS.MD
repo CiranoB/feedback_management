@@ -10,9 +10,6 @@ Tornado does not offer a automatically integration with Swagger, so it is needed
 You can check what are the dependencies for this particular project on: pyproject.toml
 If some other library will help in order to reach the objective, let it clear and ask for the user to istall.
 
-# Choice reasoning
-Available on docs/choices_reasoning.md. Keep updated.
-
 # UV package manager
 This project uses uv, so all python commands must have this in mind.
 

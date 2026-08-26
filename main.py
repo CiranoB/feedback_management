@@ -12,23 +12,10 @@ from api.config.global_settings import settings
 from api.database import create_database_engine, upgrade_database
 from api.models.comments import Comments  # noqa: F401
 from api.models.notation import Notation  # noqa: F401
-from api.routes.comments import (
-    CommentNotationHandler,
-    CommentsHandler,
-    FeedbackNotationHandler,
-)
+from api.routes.comments import CommentsHandler
 from api.routes.docs import OpenApiHandler
 from api.routes.feedback import DisplayHandler, FeedbackHandler
-
-
-class MainHandler(tornado.web.RequestHandler):
-    def get(self) -> None:  # ty: ignore[invalid-method-override]
-        self.write(chunk="Hello, world")
-
-
-class PostHandler(tornado.web.RequestHandler):
-    def get(self) -> None:  # ty: ignore[invalid-method-override]
-        self.write("<h1> This is Post 1 </h1>")
+from api.routes.notation import CommentNotationHandler, FeedbackNotationHandler
 
 
 class DatabaseHealthHandler(tornado.web.RequestHandler):
@@ -50,8 +37,6 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
     web_resources_path = Path(__file__).parent / "web_resources"
     app = tornado.web.Application(
         handlers=[
-            (r"/", MainHandler),
-            (r"/post", PostHandler),
             (r"/health/db", DatabaseHealthHandler),
             (r"/api/feedback", FeedbackHandler),
             (r"/api/feedback/([0-9]+)/comments", CommentsHandler),
