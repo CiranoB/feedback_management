@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError
 
+from api.config.custom_exceptions import DuplicateNotationError
 from api.models.notation import Notation
 from api.routes.feedback import JsonHandler
 from api.services.notation import NotationService
@@ -48,7 +48,7 @@ class DatabaseHandler(JsonHandler):
                 feedback_id=feedback_id,
                 comment_id=comment_id,
             )
-        except IntegrityError as error:
+        except DuplicateNotationError as error:
             raise HTTPError(422, reason="Invalid or duplicate notation") from error
 
 

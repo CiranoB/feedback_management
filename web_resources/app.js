@@ -27,23 +27,28 @@ function appendText(parent, tagName, text, className) {
   return element;
 }
 
-function showError(form) {
+function showError(form, message) {
   let error = form.querySelector(".error");
   if (!error) {
     error = appendText(form, "p", "", "error");
   }
-  error.textContent = "Unable to save your contribution.";
+  error.textContent = message || "Unable to save your contribution.";
 }
 
 async function submitJson(form, url, payload) {
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    showError(form);
+    const body = await response.json().catch(() => null);
+    const message =
+      body?.detail === "Invalid or duplicate notation"
+        ? "You've already notated this feedback/comment."
+        : undefined;
+    showError(form, message);
     return;
   }
 

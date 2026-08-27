@@ -25,6 +25,26 @@ h1 {
   gap: 10px;
 }
 
+.auth-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.auth-bar label {
+  font-weight: bold;
+}
+
+.auth-bar input {
+  box-sizing: border-box;
+  width: 180px;
+  border: 1px solid #bdb6a8;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font: 16px Georgia, serif;
+}
+
 .session-bar {
   margin-bottom: 24px;
 }

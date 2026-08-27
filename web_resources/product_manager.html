@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Feedback Management</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="auth.js" defer></script>
     <script src="product_manager.js" defer></script>
   </head>
   <body>
     <main>
       <h1>Product Manager Feedback</h1>
+      <div class="auth-bar">
+        <label for="auth-token-input">Auth token</label>
+        <input id="auth-token-input" name="auth_token" type="password" autocomplete="off">
+      </div>
       <p><a href="index.html">Community feedback view</a></p>
       <section id="feedback-list" aria-live="polite"></section>
     </main>

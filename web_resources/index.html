@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Feedback</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="auth.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
     <main>
       <h1>Community Feedback</h1>
+      <div class="auth-bar">
+        <label for="auth-token-input">Auth token</label>
+        <input id="auth-token-input" name="auth_token" type="password" autocomplete="off">
+      </div>
       <div class="session-bar">
         <p>Signed in as <strong id="user-id"></strong></p>
         <form id="user-switcher" class="user-switcher">

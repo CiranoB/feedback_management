@@ -45,7 +45,7 @@ function renderStatusControl(feedback, statusLabel) {
     try {
       const response = await fetch(`/api/product-manager/feedback/${feedback.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ status: select.value }),
       });
       if (!response.ok) {

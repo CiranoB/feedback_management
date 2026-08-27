@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
 from api.config.custom_exceptions import FeedbackNotFoundError
+from api.config.global_settings import settings
 from api.models.comments import Comments
 from api.models.feedback import Feedback, FeedbackStatus
 from api.models.notation import Notation
@@ -97,9 +98,19 @@ class ProductManagerFeedbackResponse(UserFeedbackResponse):
         )
 
 
+WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+
 class JsonHandler(RequestHandler):
     def set_default_headers(self) -> None:
         self.set_header("Content-Type", "application/json")
+
+    def prepare(self) -> None:
+        if (
+            self.request.method in WRITE_METHODS
+            and self.request.headers.get("X-API-Key") != settings.auth_token
+        ):
+            raise HTTPError(401, reason="Unauthorized")
 
     def write_error(self, status_code: int, **kwargs: object) -> None:
         self.finish({"detail": self._reason})

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     postgres_user: str = "feedback"
     postgres_password: str = "feedback"
     postgres_database: str = "feedback_management"
+    auth_token: str = "FeedbackChallenge"
 
     @property
     def database_url(self) -> str:

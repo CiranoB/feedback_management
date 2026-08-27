@@ -41,6 +41,7 @@ class OpenApiHandler(RequestHandler):
                         "post": {
                             "summary": "Create feedback",
                             "tags": ["User feedback"],
+                            "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -116,6 +117,7 @@ class OpenApiHandler(RequestHandler):
                         "patch": {
                             "summary": "Update feedback status",
                             "tags": ["Product manager"],
+                            "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -173,6 +175,7 @@ class OpenApiHandler(RequestHandler):
                         "post": {
                             "summary": "Add a feedback comment",
                             "tags": ["User feedback"],
+                            "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -225,6 +228,7 @@ class OpenApiHandler(RequestHandler):
                         "post": {
                             "summary": "Add notation to feedback",
                             "tags": ["User feedback"],
+                            "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -262,6 +266,7 @@ class OpenApiHandler(RequestHandler):
                         "post": {
                             "summary": "Add notation to a comment",
                             "tags": ["User feedback"],
+                            "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
                                 "required": True,
                                 "content": {
@@ -289,6 +294,13 @@ class OpenApiHandler(RequestHandler):
                     },
                 },
                 "components": {
+                    "securitySchemes": {
+                        "ApiKeyAuth": {
+                            "type": "apiKey",
+                            "in": "header",
+                            "name": "X-API-Key",
+                        }
+                    },
                     "schemas": {
                         "UserFeedback": {
                             "type": "object",
@@ -425,7 +437,7 @@ class OpenApiHandler(RequestHandler):
                                 "negative": {"type": "integer", "minimum": 0},
                             },
                         },
-                    }
+                    },
                 },
             }
         )
