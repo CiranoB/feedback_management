@@ -9,6 +9,40 @@ from api.models.feedback import Feedback, FeedbackStatus
 from api.services.feedback import FeedbackService
 
 
+def test_list_feedback_returns_feedback_entries(
+    make_session: Callable[..., Mock],
+) -> None:
+    feedback_entries = [
+        Feedback(id=1, author_id="user-1", note="note", rating=5),
+        Feedback(id=2, author_id="user-2", note=None, rating=3),
+    ]
+    session = make_session(scalars_return_value=feedback_entries)
+    service = FeedbackService(_session_factory(session))
+
+    result = asyncio.run(service.list_feedback())
+
+    assert result == feedback_entries
+    session.scalars.assert_awaited_once()
+
+
+def test_create_feedback_creates_new_feedback(
+    make_session: Callable[..., Mock],
+) -> None:
+    session = make_session()
+    service = FeedbackService(_session_factory(session))
+
+    feedback = asyncio.run(
+        service.create_feedback(author_id="user-1", note="note", rating=4)
+    )
+
+    assert feedback.author_id == "user-1"
+    assert feedback.note == "note"
+    assert feedback.rating == 4
+    session.add.assert_called_once_with(feedback)
+    session.commit.assert_awaited_once()
+    session.refresh.assert_awaited_once_with(feedback)
+
+
 def test_update_feedback_status_updates_existing_feedback(
     make_session: Callable[..., Mock],
 ) -> None:

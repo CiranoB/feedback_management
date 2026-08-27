@@ -39,7 +39,6 @@ class FeedbackService:
         self, *, feedback_id: int, status: FeedbackStatus
     ) -> Feedback:
         async with self._session_factory() as session:
-            # Atomic UPDATE avoids a check-then-act race with concurrent deletes.
             result = await session.execute(
                 update(Feedback)
                 .where(Feedback.id == feedback_id)

@@ -1,8 +1,10 @@
 from collections.abc import Sequence
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from api.config.custom_exceptions import FeedbackNotFoundError
 from api.models.comments import Comments
 
 
@@ -27,6 +29,11 @@ class CommentsService:
                 feedback_id=feedback_id,
             )
             session.add(comment)
-            await session.commit()
-            await session.refresh(comment)
-            return comment
+            try:
+                await session.commit()
+                await session.refresh(comment)
+                return comment
+            except IntegrityError as exc:
+                raise FeedbackNotFoundError(
+                    f"Feedback with id {feedback_id} does not exist"
+                ) from exc

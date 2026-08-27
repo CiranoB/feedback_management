@@ -11,6 +11,7 @@ def make_session() -> Callable[..., Mock]:
         *,
         commit_side_effect: Exception | None = None,
         scalar_return_value: object | None = None,
+        scalars_return_value: object | None = None,
         execute_return_value: object | None = None,
     ) -> Mock:
         session = Mock()
@@ -20,6 +21,7 @@ def make_session() -> Callable[..., Mock]:
         session.commit = AsyncMock(side_effect=commit_side_effect)
         session.refresh = AsyncMock()
         session.scalar = AsyncMock(return_value=scalar_return_value)
+        session.scalars = AsyncMock(return_value=scalars_return_value)
         session.execute = AsyncMock(return_value=execute_return_value)
         return session
 

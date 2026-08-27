@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError
 
+from api.config.custom_exceptions import FeedbackNotFoundError
 from api.routes.feedback import JsonHandler
 from api.services.comments import CommentsService
 
@@ -56,8 +56,8 @@ class CommentsHandler(JsonHandler):
                 content=payload.content,
                 feedback_id=int(feedback_id),
             )
-        except IntegrityError as error:
-            raise HTTPError(422, reason="Feedback does not exist") from error
+        except FeedbackNotFoundError as error:
+            raise HTTPError(404, reason="Feedback not found") from error
 
         self.set_status(201)
         self.write(CommentResponse.model_validate(comment).model_dump())

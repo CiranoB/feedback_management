@@ -3,4 +3,4 @@ class DuplicateNotationError(Exception):
 
 
 class FeedbackNotFoundError(Exception):
-    """Raised when attempting to update the status of a feedback that does not exist."""
+    """Raised when attempting to operate on a feedback that does not exist."""
