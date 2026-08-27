@@ -21,3 +21,9 @@ The API lacks telemetry.
 
 # Pagination
 As the amount of data grows, pagination will become essential.
+
+# DTO
+Since the ammount of data transactioned across the layers (services, router, etc) are minimal, this project does not uses DTOs. But soon as the ammount of data increase, it is particularly important to use it.
+
+# Middleware Errors Handler
+In a particular case, the Database can be locked and return error. Right now, we don't have a good handler for this. For prod. env. I'd use something like: https://fastapi.tiangolo.com/tutorial/middleware/

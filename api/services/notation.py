@@ -1,5 +1,7 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from api.config.custom_exceptions import DuplicateNotationError
 from api.models.notation import Notation
 
 
@@ -23,6 +25,11 @@ class NotationService:
                 comment_id=comment_id,
             )
             session.add(notation)
-            await session.commit()
-            await session.refresh(notation)
-            return notation
+            try:
+                await session.commit()
+                await session.refresh(notation)
+                return notation
+            except IntegrityError as exc:
+                raise DuplicateNotationError(
+                    "It is not possible to give more than one notation to a particular comment/feedback"
+                ) from exc

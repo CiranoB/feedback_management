@@ -1,9 +1,10 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
+from api.config.custom_exceptions import FeedbackNotFoundError
 from api.models.comments import Comments
 from api.models.feedback import Feedback, FeedbackStatus
 
@@ -36,8 +37,20 @@ class FeedbackService:
 
     async def update_feedback_status(
         self, *, feedback_id: int, status: FeedbackStatus
-    ) -> Feedback | None:
+    ) -> Feedback:
         async with self._session_factory() as session:
+            # Atomic UPDATE avoids a check-then-act race with concurrent deletes.
+            result = await session.execute(
+                update(Feedback)
+                .where(Feedback.id == feedback_id)
+                .values(status=status)
+                .returning(Feedback.id)
+            )
+            if result.scalar_one_or_none() is None:
+                raise FeedbackNotFoundError(
+                    f"Feedback with id {feedback_id} does not exist"
+                )
+
             feedback = await session.scalar(
                 select(Feedback)
                 .options(
@@ -46,9 +59,6 @@ class FeedbackService:
                 )
                 .where(Feedback.id == feedback_id)
             )
-            if feedback is None:
-                return None
-
-            feedback.status = status
             await session.commit()
+            assert feedback is not None
             return feedback

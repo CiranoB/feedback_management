@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
+from api.config.custom_exceptions import FeedbackNotFoundError
 from api.models.comments import Comments
 from api.models.feedback import Feedback, FeedbackStatus
 from api.models.notation import Notation
@@ -170,11 +171,14 @@ class ProductManagerFeedbackDetailHandler(JsonHandler):
                 422, reason=f"Invalid feedback status payload: {error}"
             ) from error
 
-        feedback = await FeedbackService(self.session_factory).update_feedback_status(
-            feedback_id=int(feedback_id), status=payload.status
-        )
-        if feedback is None:
-            raise HTTPError(404, reason="Feedback not found")
+        try:
+            feedback = await FeedbackService(
+                self.session_factory
+            ).update_feedback_status(
+                feedback_id=int(feedback_id), status=payload.status
+            )
+        except FeedbackNotFoundError as error:
+            raise HTTPError(404, reason="Feedback not found") from error
 
         self.write(
             ProductManagerFeedbackResponse.from_model(feedback).model_dump(mode="json")
