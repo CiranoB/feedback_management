@@ -6,8 +6,8 @@ Tornado API for collecting rated feedback, backed by PostgreSQL.
 
 You can explore it via Swagger, or through the web resources (user and product manager views):
 
-- User view: `/web/{user_id}`
-- Product manager view: `/web_resources/product_manager.html?user_id={user_id}`
+- User view: [/web/{user_id}](https://feedback-management-l0qx.onrender.com/web/1)
+- Product manager view: [/web_resources/product_manager.html?user_id={user_id}](https://feedback-management-l0qx.onrender.com/product_manager.html?user_id=1)
 
 To interact with the live version, a password is needed. It was sent over email. GET endpoints are open.
 
