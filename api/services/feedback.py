@@ -118,11 +118,16 @@ class FeedbackService:
             )
 
             # Notations are unique per (user, feedback); target's vote wins on conflict.
+            # Removing each notation from `source.notations` up front keeps the
+            # relationship in sync so the flush doesn't try to null out the FK of
+            # moved/deleted notations when `source` itself is deleted below.
             target_notation_users = {notation.user_id for notation in target.notations}
-            for notation in source.notations:
+            for notation in list(source.notations):
+                source.notations.remove(notation)
                 if notation.user_id in target_notation_users:
                     await session.delete(notation)
                 else:
+                    notation.feedback = target
                     notation.feedback_id = target_feedback_id
 
             await session.delete(source)
