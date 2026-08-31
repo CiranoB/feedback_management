@@ -19,6 +19,7 @@ COPY alembic.ini ./
 COPY alembic ./alembic
 COPY main.py ./
 COPY api ./api
+COPY web_resources ./web_resources
 
 EXPOSE 8888
 
