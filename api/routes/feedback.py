@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
-from api.config.custom_exceptions import FeedbackNotFoundError
+from api.config.custom_exceptions import FeedbackMergeError, FeedbackNotFoundError
 from api.config.global_settings import settings
 from api.models.comments import Comments
 from api.models.feedback import Feedback, FeedbackCategory, FeedbackStatus
@@ -31,6 +31,10 @@ class FeedbackManagerUpdate(BaseModel):
         if self.status is None and self.category is None:
             raise ValueError("At least one of status or category must be provided")
         return self
+
+
+class FeedbackMergeRequest(BaseModel):
+    target_feedback_id: int = Field(ge=1)
 
 
 class NotationSummary(BaseModel):
@@ -210,6 +214,37 @@ class ProductManagerFeedbackDetailHandler(JsonHandler):
             )
         except FeedbackNotFoundError as error:
             raise HTTPError(404, reason="Feedback not found") from error
+
+        self.write(
+            ProductManagerFeedbackResponse.from_model(feedback).model_dump(mode="json")
+        )
+
+
+class ProductManagerFeedbackMergeHandler(JsonHandler):
+    @property
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
+        database_engine: AsyncEngine = self.settings["database_engine"]
+        return async_sessionmaker(database_engine, expire_on_commit=False)
+
+    async def post(self, feedback_id: str) -> None:  # ty: ignore[invalid-method-override]
+        try:
+            payload: FeedbackMergeRequest = FeedbackMergeRequest.model_validate(
+                json.loads(self.request.body)
+            )
+        except (json.JSONDecodeError, ValidationError) as error:
+            raise HTTPError(
+                422, reason=f"Invalid feedback merge payload: {error}"
+            ) from error
+
+        try:
+            feedback = await FeedbackService(self.session_factory).merge_feedback(
+                source_feedback_id=int(feedback_id),
+                target_feedback_id=payload.target_feedback_id,
+            )
+        except FeedbackNotFoundError as error:
+            raise HTTPError(404, reason="Feedback not found") from error
+        except FeedbackMergeError as error:
+            raise HTTPError(422, reason=str(error)) from error
 
         self.write(
             ProductManagerFeedbackResponse.from_model(feedback).model_dump(mode="json")

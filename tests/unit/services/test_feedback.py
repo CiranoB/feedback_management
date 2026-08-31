@@ -1,11 +1,12 @@
 import asyncio
 from collections.abc import Callable
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from api.config.custom_exceptions import FeedbackNotFoundError
+from api.config.custom_exceptions import FeedbackMergeError, FeedbackNotFoundError
 from api.models.feedback import Feedback, FeedbackCategory, FeedbackStatus
+from api.models.notation import Notation
 from api.services.feedback import FeedbackService
 
 
@@ -118,6 +119,131 @@ def test_update_feedback_raises_when_feedback_does_not_exist(
     session.scalar.assert_not_awaited()
     session.commit.assert_not_awaited()
 
+
+def test_merge_feedback_combines_notes_and_moves_comments(
+    make_session: Callable[..., Mock],
+) -> None:
+    source = Feedback(id=2, author_id="user-2", note="Text 2", rating=3)
+    target = Feedback(
+        id=1,
+        author_id="user-1",
+        note="Text 1",
+        rating=5,
+        status=FeedbackStatus.CLOSED_SOLVED,
+        category=FeedbackCategory.BUGS,
+    )
+    merged = Feedback(
+        id=1,
+        author_id="user-1",
+        note="Text 1\n-----\nText 2",
+        rating=5,
+        status=FeedbackStatus.CLOSED_SOLVED,
+        category=FeedbackCategory.BUGS,
+    )
+    session = make_session()
+    session.scalar = AsyncMock(side_effect=[source, target, merged])
+    service = FeedbackService(_session_factory(session))
+
+    result = asyncio.run(
+        service.merge_feedback(source_feedback_id=2, target_feedback_id=1)
+    )
+
+    assert result is merged
+    assert target.note == "Text 1\n-----\nText 2"
+    session.execute.assert_awaited_once()
+    session.delete.assert_awaited_once_with(source)
+    session.commit.assert_awaited_once()
+
+
+def test_merge_feedback_uses_source_note_when_target_note_is_none(
+    make_session: Callable[..., Mock],
+) -> None:
+    source = Feedback(id=2, author_id="user-2", note="Text 2", rating=3)
+    target = Feedback(id=1, author_id="user-1", note=None, rating=5)
+    session = make_session()
+    session.scalar = AsyncMock(side_effect=[source, target, target])
+    service = FeedbackService(_session_factory(session))
+
+    asyncio.run(service.merge_feedback(source_feedback_id=2, target_feedback_id=1))
+
+    assert target.note == "Text 2"
+
+
+def test_merge_feedback_keeps_target_note_when_source_note_is_none(
+    make_session: Callable[..., Mock],
+) -> None:
+    source = Feedback(id=2, author_id="user-2", note=None, rating=3)
+    target = Feedback(id=1, author_id="user-1", note="Text 1", rating=5)
+    session = make_session()
+    session.scalar = AsyncMock(side_effect=[source, target, target])
+    service = FeedbackService(_session_factory(session))
+
+    asyncio.run(service.merge_feedback(source_feedback_id=2, target_feedback_id=1))
+
+    assert target.note == "Text 1"
+
+
+def test_merge_feedback_drops_source_notation_on_conflict(
+    make_session: Callable[..., Mock],
+) -> None:
+    conflicting_notation = Notation(id=10, user_id="user-a", value=1, feedback_id=2)
+    movable_notation = Notation(id=11, user_id="user-b", value=-1, feedback_id=2)
+    source = Feedback(
+        id=2,
+        author_id="user-2",
+        note="Text 2",
+        rating=3,
+        notations=[conflicting_notation, movable_notation],
+    )
+    target = Feedback(
+        id=1,
+        author_id="user-1",
+        note="Text 1",
+        rating=5,
+        notations=[Notation(id=12, user_id="user-a", value=0, feedback_id=1)],
+    )
+    session = make_session()
+    session.scalar = AsyncMock(side_effect=[source, target, target])
+    service = FeedbackService(_session_factory(session))
+
+    asyncio.run(service.merge_feedback(source_feedback_id=2, target_feedback_id=1))
+
+    session.delete.assert_any_await(conflicting_notation)
+    assert movable_notation.feedback_id == 1
+
+
+def test_merge_feedback_raises_when_source_does_not_exist(
+    make_session: Callable[..., Mock],
+) -> None:
+    session = make_session()
+    session.scalar = AsyncMock(return_value=None)
+    service = FeedbackService(_session_factory(session))
+
+    with pytest.raises(FeedbackNotFoundError):
+        asyncio.run(service.merge_feedback(source_feedback_id=2, target_feedback_id=1))
+
+    session.commit.assert_not_awaited()
+
+
+def test_merge_feedback_raises_when_target_does_not_exist(
+    make_session: Callable[..., Mock],
+) -> None:
+    source = Feedback(id=2, author_id="user-2", note="Text 2", rating=3)
+    session = make_session()
+    session.scalar = AsyncMock(side_effect=[source, None])
+    service = FeedbackService(_session_factory(session))
+
+    with pytest.raises(FeedbackNotFoundError):
+        asyncio.run(service.merge_feedback(source_feedback_id=2, target_feedback_id=1))
+
+    session.commit.assert_not_awaited()
+
+
+def test_merge_feedback_raises_when_merging_into_itself() -> None:
+    service = FeedbackService(Mock())
+
+    with pytest.raises(FeedbackMergeError):
+        asyncio.run(service.merge_feedback(source_feedback_id=1, target_feedback_id=1))
 
 
 def _execute_result(value: int | None) -> Mock:

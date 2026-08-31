@@ -20,6 +20,7 @@ def make_session() -> Callable[..., Mock]:
         session.add = Mock()
         session.commit = AsyncMock(side_effect=commit_side_effect)
         session.refresh = AsyncMock()
+        session.delete = AsyncMock()
         session.scalar = AsyncMock(return_value=scalar_return_value)
         session.scalars = AsyncMock(return_value=scalars_return_value)
         session.execute = AsyncMock(return_value=execute_return_value)

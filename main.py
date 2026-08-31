@@ -20,6 +20,7 @@ from api.routes.feedback import (
     FeedbackHandler,
     ProductManagerFeedbackDetailHandler,
     ProductManagerFeedbackHandler,
+    ProductManagerFeedbackMergeHandler,
 )
 from api.routes.notation import CommentNotationHandler, FeedbackNotationHandler
 
@@ -59,6 +60,10 @@ def make_app(database_engine: AsyncEngine) -> tornado.web.Application:
             (
                 r"/api/product-manager/feedback/([0-9]+)",
                 ProductManagerFeedbackDetailHandler,
+            ),
+            (
+                r"/api/product-manager/feedback/([0-9]+)/merge",
+                ProductManagerFeedbackMergeHandler,
             ),
             (r"/api/feedback/([0-9]+)/comments", CommentsHandler),
             (r"/api/feedback/([0-9]+)/notations", FeedbackNotationHandler),

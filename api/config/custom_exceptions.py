@@ -4,3 +4,7 @@ class DuplicateNotationError(Exception):
 
 class FeedbackNotFoundError(Exception):
     """Raised when attempting to operate on a feedback that does not exist."""
+
+
+class FeedbackMergeError(Exception):
+    """Raised when a feedback merge request is invalid."""

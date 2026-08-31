@@ -21,6 +21,7 @@ class OpenApiHandler(RequestHandler):
                     "/api/feedback": {
                         "get": {
                             "summary": "List feedback",
+                            "description": "Returns all feedback entries, newest first, with their comments and notation counts.",
                             "tags": ["User feedback"],
                             "responses": {
                                 "200": {
@@ -40,6 +41,7 @@ class OpenApiHandler(RequestHandler):
                         },
                         "post": {
                             "summary": "Create feedback",
+                            "description": "Submits a new feedback entry with a rating and an optional note.",
                             "tags": ["User feedback"],
                             "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
@@ -87,6 +89,7 @@ class OpenApiHandler(RequestHandler):
                     "/api/product-manager/feedback": {
                         "get": {
                             "summary": "List feedback for product management",
+                            "description": "Returns all feedback entries with management fields (author, status, category), optionally filtered by status.",
                             "tags": ["Product manager"],
                             "parameters": [
                                 {
@@ -134,6 +137,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "patch": {
                             "summary": "Update feedback status and/or category",
+                            "description": "Updates the status and/or category of a single feedback entry.",
                             "tags": ["Product manager"],
                             "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
@@ -162,6 +166,49 @@ class OpenApiHandler(RequestHandler):
                             },
                         },
                     },
+                    "/api/product-manager/feedback/{feedback_id}/merge": {
+                        "parameters": [
+                            {
+                                "name": "feedback_id",
+                                "in": "path",
+                                "required": True,
+                                "description": "Source feedback to merge and delete.",
+                                "schema": {"type": "integer", "minimum": 1},
+                            }
+                        ],
+                        "post": {
+                            "summary": "Merge feedback into another feedback entry",
+                            "description": "Moves the source feedback's note and comments into the target feedback, then deletes the source.",
+                            "tags": ["Product manager"],
+                            "security": [{"ApiKeyAuth": []}],
+                            "requestBody": {
+                                "required": True,
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/FeedbackMergeRequest"
+                                        }
+                                    }
+                                },
+                            },
+                            "responses": {
+                                "200": {
+                                    "description": "The target feedback after merging",
+                                    "content": {
+                                        "application/json": {
+                                            "schema": {
+                                                "$ref": "#/components/schemas/ProductManagerFeedback"
+                                            }
+                                        }
+                                    },
+                                },
+                                "404": {
+                                    "description": "Source or target feedback not found"
+                                },
+                                "422": {"description": "Invalid merge payload"},
+                            },
+                        },
+                    },
                     "/api/feedback/{feedback_id}/comments": {
                         "parameters": [
                             {
@@ -173,6 +220,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "get": {
                             "summary": "List feedback comments",
+                            "description": "Returns all comments attached to a feedback entry.",
                             "tags": ["User feedback"],
                             "responses": {
                                 "200": {
@@ -192,6 +240,7 @@ class OpenApiHandler(RequestHandler):
                         },
                         "post": {
                             "summary": "Add a feedback comment",
+                            "description": "Creates a new comment on an existing feedback entry.",
                             "tags": ["User feedback"],
                             "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
@@ -245,6 +294,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "post": {
                             "summary": "Add notation to feedback",
+                            "description": "Registers a user's upvote, downvote, or neutral notation on a feedback entry.",
                             "tags": ["User feedback"],
                             "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
@@ -283,6 +333,7 @@ class OpenApiHandler(RequestHandler):
                         ],
                         "post": {
                             "summary": "Add notation to a comment",
+                            "description": "Registers a user's upvote, downvote, or neutral notation on a comment.",
                             "tags": ["User feedback"],
                             "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
@@ -402,6 +453,17 @@ class OpenApiHandler(RequestHandler):
                                         "bugs",
                                     ],
                                 },
+                            },
+                        },
+                        "FeedbackMergeRequest": {
+                            "type": "object",
+                            "required": ["target_feedback_id"],
+                            "properties": {
+                                "target_feedback_id": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "description": "Feedback that will absorb the note and comments of the feedback in the path.",
+                                }
                             },
                         },
                         "Comment": {

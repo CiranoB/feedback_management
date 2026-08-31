@@ -95,6 +95,61 @@ function renderCategoryControl(feedback, categoryLabel) {
   return control;
 }
 
+function renderMergeControl(feedback) {
+  const form = document.createElement("form");
+  form.className = "merge-control";
+  const label = document.createElement("label");
+  appendText(label, "span", "Merge into feedback #");
+  const input = document.createElement("input");
+  input.type = "number";
+  input.min = "1";
+  input.required = true;
+  label.append(input);
+  form.append(label);
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.textContent = "Merge";
+  form.append(button);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const targetFeedbackId = Number(input.value);
+    if (!targetFeedbackId || targetFeedbackId === feedback.id) {
+      appendText(form, "span", "Enter a different feedback id.", "error");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Merge feedback #${feedback.id} into #${targetFeedbackId}? This deletes feedback #${feedback.id}.`,
+      )
+    ) {
+      return;
+    }
+    input.disabled = true;
+    button.disabled = true;
+    try {
+      const response = await fetch(
+        `/api/product-manager/feedback/${feedback.id}/merge`,
+        {
+          method: "POST",
+          headers: authHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ target_feedback_id: targetFeedbackId }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Unable to merge feedback");
+      }
+      await loadFeedback();
+    } catch {
+      appendText(form, "span", "Unable to merge feedback.", "error");
+      input.disabled = false;
+      button.disabled = false;
+    }
+  });
+
+  return form;
+}
+
 function renderFeedback(feedback) {
   const article = document.createElement("article");
   const header = document.createElement("header");
@@ -130,6 +185,7 @@ function renderFeedback(feedback) {
   article.append(signals);
   article.append(renderStatusControl(feedback, statusLabel));
   article.append(renderCategoryControl(feedback, categoryLabel));
+  article.append(renderMergeControl(feedback));
 
   const discussion = document.createElement("details");
   discussion.className = "discussion";
