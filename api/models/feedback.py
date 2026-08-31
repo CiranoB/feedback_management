@@ -29,6 +29,13 @@ class FeedbackStatus(str, Enum):
     CLOSED_REJECTED = "closed_rejected"
 
 
+class FeedbackCategory(str, Enum):
+    FRONTEND = "frontend"
+    BACKEND = "backend"
+    PERFORMANCE_ISSUES = "performance_issues"
+    BUGS = "bugs"
+
+
 class Feedback(Base):
     __tablename__ = "feedback"
 
@@ -51,6 +58,17 @@ class Feedback(Base):
         default=FeedbackStatus.OPEN,
         server_default=FeedbackStatus.OPEN.name,
         nullable=False,
+    )
+    # Null means uncategorized; only surfaced to product managers, not end users.
+    category: Mapped[FeedbackCategory | None] = mapped_column(
+        SqlEnum(
+            FeedbackCategory,
+            name="feedback_category",
+            native_enum=False,
+            create_constraint=True,
+            validate_strings=True,
+        ),
+        nullable=True,
     )
     comments: Mapped[list[Comments]] = relationship(back_populates="feedback")
     notations: Mapped[list[Notation]] = relationship(
