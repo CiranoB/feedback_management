@@ -27,3 +27,6 @@ Since the ammount of data transactioned across the layers (services, router, etc
 
 # Middleware Errors Handler
 In a particular case, the Database can be locked and return error. Right now, we don't have a good handler for this. For prod. env. I'd use something like: https://fastapi.tiangolo.com/tutorial/middleware/
+
+# JSON API Specification/Recomendation
+It was missing in this project.
