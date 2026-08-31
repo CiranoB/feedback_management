@@ -88,6 +88,23 @@ class OpenApiHandler(RequestHandler):
                         "get": {
                             "summary": "List feedback for product management",
                             "tags": ["Product manager"],
+                            "parameters": [
+                                {
+                                    "name": "status",
+                                    "in": "query",
+                                    "required": False,
+                                    "description": "Filter feedback entries by status",
+                                    "schema": {
+                                        "type": "string",
+                                        "enum": [
+                                            "open",
+                                            "closed_backlog",
+                                            "closed_solved",
+                                            "closed_rejected",
+                                        ],
+                                    },
+                                }
+                            ],
                             "responses": {
                                 "200": {
                                     "description": "Feedback entries with management fields, newest first",
@@ -101,7 +118,8 @@ class OpenApiHandler(RequestHandler):
                                             }
                                         }
                                     },
-                                }
+                                },
+                                "422": {"description": "Invalid status filter"},
                             },
                         }
                     },
@@ -115,7 +133,7 @@ class OpenApiHandler(RequestHandler):
                             }
                         ],
                         "patch": {
-                            "summary": "Update feedback status",
+                            "summary": "Update feedback status and/or category",
                             "tags": ["Product manager"],
                             "security": [{"ApiKeyAuth": []}],
                             "requestBody": {
@@ -123,7 +141,7 @@ class OpenApiHandler(RequestHandler):
                                 "content": {
                                     "application/json": {
                                         "schema": {
-                                            "$ref": "#/components/schemas/FeedbackStatusUpdate"
+                                            "$ref": "#/components/schemas/FeedbackManagerUpdate"
                                         }
                                     }
                                 },
@@ -140,7 +158,7 @@ class OpenApiHandler(RequestHandler):
                                     },
                                 },
                                 "404": {"description": "Feedback not found"},
-                                "422": {"description": "Invalid status payload"},
+                                "422": {"description": "Invalid update payload"},
                             },
                         },
                     },
@@ -335,7 +353,7 @@ class OpenApiHandler(RequestHandler):
                                 {"$ref": "#/components/schemas/UserFeedback"},
                                 {
                                     "type": "object",
-                                    "required": ["author_id", "status"],
+                                    "required": ["author_id", "status", "category"],
                                     "properties": {
                                         "author_id": {"type": "string"},
                                         "status": {
@@ -347,13 +365,24 @@ class OpenApiHandler(RequestHandler):
                                                 "closed_rejected",
                                             ],
                                         },
+                                        "category": {
+                                            "type": ["string", "null"],
+                                            "description": "Null means the feedback has not been categorized yet.",
+                                            "enum": [
+                                                "frontend",
+                                                "backend",
+                                                "performance_issues",
+                                                "bugs",
+                                                None,
+                                            ],
+                                        },
                                     },
                                 },
                             ]
                         },
-                        "FeedbackStatusUpdate": {
+                        "FeedbackManagerUpdate": {
                             "type": "object",
-                            "required": ["status"],
+                            "description": "At least one of status or category must be provided.",
                             "properties": {
                                 "status": {
                                     "type": "string",
@@ -363,7 +392,16 @@ class OpenApiHandler(RequestHandler):
                                         "closed_solved",
                                         "closed_rejected",
                                     ],
-                                }
+                                },
+                                "category": {
+                                    "type": "string",
+                                    "enum": [
+                                        "frontend",
+                                        "backend",
+                                        "performance_issues",
+                                        "bugs",
+                                    ],
+                                },
                             },
                         },
                         "Comment": {

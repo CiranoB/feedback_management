@@ -45,6 +45,22 @@ h1 {
   font: 16px Georgia, serif;
 }
 
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.filter-bar label {
+  font-weight: bold;
+}
+
+.filter-bar select {
+  padding: 5px;
+  font: 16px Georgia, serif;
+}
+
 .session-bar {
   margin-bottom: 24px;
 }
@@ -110,6 +126,7 @@ article header,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
@@ -141,6 +158,56 @@ article header,
 .status.closed_solved {
   background: #d4e7e8;
   color: #16555b;
+}
+
+.category {
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #e4dfd3;
+  color: #58636c;
+  font: 700 13px Georgia, serif;
+  text-transform: capitalize;
+}
+
+.category.frontend {
+  background: #d7e3f3;
+  color: #1b4c8b;
+}
+
+.category.backend {
+  background: #e7dfb9;
+  color: #675b0d;
+}
+
+.category.performance_issues {
+  background: #f0dcae;
+  color: #8a5a12;
+}
+
+.category.bugs {
+  background: #f3d7d1;
+  color: #8b2b1c;
+}
+
+.status-control,
+.category-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  color: #58636c;
+  font-size: 13px;
+}
+
+.status-control span,
+.category-control span {
+  font-weight: bold;
+}
+
+.status-control select,
+.category-control select {
+  padding: 4px 6px;
+  font: 14px Georgia, serif;
 }
 
 .note {

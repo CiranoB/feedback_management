@@ -2,17 +2,16 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from html import escape
 from urllib.parse import quote
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, model_validator
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from tornado.web import HTTPError, RequestHandler
 
 from api.config.custom_exceptions import FeedbackNotFoundError
 from api.config.global_settings import settings
 from api.models.comments import Comments
-from api.models.feedback import Feedback, FeedbackStatus
+from api.models.feedback import Feedback, FeedbackCategory, FeedbackStatus
 from api.models.notation import Notation
 from api.services.feedback import FeedbackService
 
@@ -23,8 +22,15 @@ class FeedbackCreate(BaseModel):
     rating: int = Field(ge=1, le=5)
 
 
-class FeedbackStatusUpdate(BaseModel):
-    status: FeedbackStatus
+class FeedbackManagerUpdate(BaseModel):
+    status: FeedbackStatus | None = None
+    category: FeedbackCategory | None = None
+
+    @model_validator(mode="after")
+    def _require_at_least_one_field(self) -> FeedbackManagerUpdate:
+        if self.status is None and self.category is None:
+            raise ValueError("At least one of status or category must be provided")
+        return self
 
 
 class NotationSummary(BaseModel):
@@ -82,6 +88,7 @@ class UserFeedbackResponse(BaseModel):
 class ProductManagerFeedbackResponse(UserFeedbackResponse):
     author_id: str
     status: FeedbackStatus
+    category: FeedbackCategory | None
 
     @classmethod
     def from_model(cls, feedback: Feedback) -> ProductManagerFeedbackResponse:
@@ -91,6 +98,7 @@ class ProductManagerFeedbackResponse(UserFeedbackResponse):
             note=feedback.note,
             rating=feedback.rating,
             status=feedback.status,
+            category=feedback.category,
             comments=[
                 CommentResponse.from_model(comment) for comment in feedback.comments
             ],
@@ -158,7 +166,19 @@ class FeedbackHandler(JsonHandler):
 
 class ProductManagerFeedbackHandler(FeedbackHandler):
     async def get(self, *args: str, **kwargs: str) -> None:
-        feedback_entries = await FeedbackService(self.session_factory).list_feedback()
+        status_param = self.get_query_argument("status", default=None)
+        status_filter: FeedbackStatus | None = None
+        if status_param:
+            try:
+                status_filter = FeedbackStatus(status_param)
+            except ValueError as error:
+                raise HTTPError(
+                    422, reason=f"Invalid status filter: {status_param}"
+                ) from error
+
+        feedback_entries = await FeedbackService(self.session_factory).list_feedback(
+            status=status_filter
+        )
         response = [
             ProductManagerFeedbackResponse.from_model(entry).model_dump(mode="json")
             for entry in feedback_entries
@@ -174,19 +194,19 @@ class ProductManagerFeedbackDetailHandler(JsonHandler):
 
     async def patch(self, feedback_id: str) -> None:  # ty: ignore[invalid-method-override]
         try:
-            payload: FeedbackStatusUpdate = FeedbackStatusUpdate.model_validate(
+            payload: FeedbackManagerUpdate = FeedbackManagerUpdate.model_validate(
                 json.loads(self.request.body)
             )
         except (json.JSONDecodeError, ValidationError) as error:
             raise HTTPError(
-                422, reason=f"Invalid feedback status payload: {error}"
+                422, reason=f"Invalid feedback update payload: {error}"
             ) from error
 
         try:
-            feedback = await FeedbackService(
-                self.session_factory
-            ).update_feedback_status(
-                feedback_id=int(feedback_id), status=payload.status
+            feedback = await FeedbackService(self.session_factory).update_feedback(
+                feedback_id=int(feedback_id),
+                status=payload.status,
+                category=payload.category,
             )
         except FeedbackNotFoundError as error:
             raise HTTPError(404, reason="Feedback not found") from error
@@ -194,25 +214,6 @@ class ProductManagerFeedbackDetailHandler(JsonHandler):
         self.write(
             ProductManagerFeedbackResponse.from_model(feedback).model_dump(mode="json")
         )
-
-
-def render_notations(notations: Sequence[Notation]) -> str:
-    if not notations:
-        return '<span class="vote-empty">No votes yet</span>'
-
-    score = sum(notation.value for notation in notations)
-    score_class = "positive" if score > 0 else "negative" if score < 0 else "neutral"
-    votes = "".join(
-        f'<span class="vote {"positive" if notation.value > 0 else "negative" if notation.value < 0 else "neutral"}" '
-        f'title="{escape(notation.user_id)}: {notation.value:+d}">'
-        f"{notation.value:+d}</span>"
-        for notation in notations
-    )
-    return (
-        f'<div class="vote-summary {score_class}"><strong>{score:+d}</strong>'
-        f'<span class="vote-strip" aria-label="{len(notations)} votes">{votes}</span>'
-        "</div>"
-    )
 
 
 class DisplayHandler(RequestHandler):

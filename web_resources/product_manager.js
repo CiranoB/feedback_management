@@ -1,30 +1,14 @@
 const feedbackList = document.querySelector("#feedback-list");
+const statusFilter = document.querySelector("#status-filter");
 
-function appendText(parent, tagName, text, className) {
-  const element = document.createElement(tagName);
-  element.textContent = text;
-  if (className) {
-    element.className = className;
-  }
-  parent.append(element);
-  return element;
-}
-
-function renderNotations(notations) {
-  const summary = document.createElement("div");
-  summary.className = "vote-summary";
-  const score = notations.positive - notations.negative;
-  appendText(summary, "strong", `${score >= 0 ? "+" : ""}${score}`);
-  appendText(
-    summary,
-    "span",
-    `${notations.positive} positive, ${notations.neutral} neutral, ${notations.negative} negative`,
-  );
-  return summary;
-}
+const CATEGORIES = ["frontend", "backend", "performance_issues", "bugs"];
 
 function formatStatus(status) {
   return status.replaceAll("_", " ");
+}
+
+function formatCategory(category) {
+  return category ? category.replaceAll("_", " ") : "uncategorized";
 }
 
 function renderStatusControl(feedback, statusLabel) {
@@ -66,6 +50,51 @@ function renderStatusControl(feedback, statusLabel) {
   return control;
 }
 
+function renderCategoryControl(feedback, categoryLabel) {
+  const control = document.createElement("label");
+  control.className = "category-control";
+  appendText(control, "span", "Category");
+  const select = document.createElement("select");
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Uncategorized";
+  placeholder.disabled = true;
+  placeholder.selected = !feedback.category;
+  select.append(placeholder);
+  CATEGORIES.forEach((category) => {
+    const option = document.createElement("option");
+    option.value = category;
+    option.textContent = formatCategory(category);
+    option.selected = category === feedback.category;
+    select.append(option);
+  });
+  select.addEventListener("change", async () => {
+    const previousCategory = feedback.category;
+    select.disabled = true;
+    try {
+      const response = await fetch(`/api/product-manager/feedback/${feedback.id}`, {
+        method: "PATCH",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ category: select.value }),
+      });
+      if (!response.ok) {
+        throw new Error("Unable to update category");
+      }
+      const updatedFeedback = await response.json();
+      feedback.category = updatedFeedback.category;
+      categoryLabel.textContent = formatCategory(feedback.category);
+      categoryLabel.className = `category ${feedback.category || "uncategorized"}`;
+    } catch {
+      select.value = previousCategory || "";
+      appendText(control, "span", "Unable to update category.", "error");
+    } finally {
+      select.disabled = false;
+    }
+  });
+  control.append(select);
+  return control;
+}
+
 function renderFeedback(feedback) {
   const article = document.createElement("article");
   const header = document.createElement("header");
@@ -75,6 +104,12 @@ function renderFeedback(feedback) {
     "span",
     formatStatus(feedback.status),
     `status ${feedback.status}`,
+  );
+  const categoryLabel = appendText(
+    header,
+    "span",
+    formatCategory(feedback.category),
+    `category ${feedback.category || "uncategorized"}`,
   );
   article.append(header);
   appendText(article, "p", `Submitted by ${feedback.author_id}`);
@@ -94,6 +129,7 @@ function renderFeedback(feedback) {
   signals.append(communitySignal);
   article.append(signals);
   article.append(renderStatusControl(feedback, statusLabel));
+  article.append(renderCategoryControl(feedback, categoryLabel));
 
   const discussion = document.createElement("details");
   discussion.className = "discussion";
@@ -120,7 +156,11 @@ function renderFeedback(feedback) {
 }
 
 async function loadFeedback() {
-  const response = await fetch("/api/product-manager/feedback");
+  const params = new URLSearchParams();
+  if (statusFilter.value) {
+    params.set("status", statusFilter.value);
+  }
+  const response = await fetch(`/api/product-manager/feedback?${params.toString()}`);
   feedbackList.replaceChildren();
   if (!response.ok) {
     appendText(feedbackList, "p", "Unable to load feedback.", "error");
@@ -134,5 +174,7 @@ async function loadFeedback() {
   }
   feedbackEntries.forEach((feedback) => feedbackList.append(renderFeedback(feedback)));
 }
+
+statusFilter.addEventListener("change", loadFeedback);
 
 loadFeedback();
